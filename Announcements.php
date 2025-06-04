@@ -11,16 +11,6 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
     /**
      * Sorts an array of associative arrays in place.
      *
-     * The sorting logic is as follows:
-     * 1. Items are primarily sorted by the $primary_sort_key numerically (ascending).
-     * 2. If a $primary_sort_key value is an empty string or not set, that item is
-     * considered to have "no primary order" and will be grouped after all items
-     * that do have a primary order.
-     * 3. If two items have the same $primary_sort_key value (and it's not empty),
-     * they are then sorted by the $secondary_sort_key numerically (ascending).
-     * 4. Items that have "no primary order" (empty $primary_sort_key) are sorted
-     * amongst themselves using the $secondary_sort_key numerically (ascending).
-     *
      * @param array &$array The array to be sorted (passed by reference).
      * @param string $primary_sort_key The key to use for the primary sort.
      * @param string $secondary_sort_key The key to use for secondary sort / tie-breaking.
@@ -79,14 +69,13 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         );
         $is_project_context = ($project_id !== null);
         $is_user_logged_in = defined('USERID');
+
         if (!$is_system_context && !$is_project_context) {
-            return; // No need to proceed.
+            return;
         }
 
         $announcementProject = $this->getSystemSetting('announcement-project');
         $now = date('Y-m-d H:i:s');
-        var_dump($announcementProject);
-        echo "Foobar";
         $categoryParams = array
             (
                 'project_id'=>$announcementProject,
@@ -105,16 +94,15 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 and
                 ( datediff("now",[announcements_arm_1][until],"s","true") > 0 or [announcements_arm_1][until] = "" )
                 and [announcements_arm_1][active] = "1"
-',
-        'fields'=>array('record_id', 'cat', 'desc', 'active', 'order', 'since', 'until')
+                ',
+                'fields'=>array('record_id', 'cat', 'desc', 'active', 'order', 'since', 'until')
             );
         $announcements = json_decode(REDCap::getData($announcementParams), true);
         $categories = json_decode(REDCap::getData($categoryParams), true);
         $this->sort_array_by_key($announcements, 'order', 'record_id');
         $this->sort_array_by_key($categories, 'cat_order', 'record_id');
-        /* var_dump($announcements); */
 
-        // Step 1: Pre-group announcements by category ID for efficiency
+        // Group announcements by category ID for efficiency
         $announcements_by_category = [];
         foreach ($announcements as $ann) {
             $category_id_for_ann = $ann['cat'] ?? null; // 'cat' field links to category record_id
@@ -158,16 +146,16 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 (!$is_user_logged_in && $category['scope___3'] == '1')) // Non-logged in users on login page
             ) {
 
-                // Create a slug-like class from category title for more specific CSS targeting if desired
-                $category_slug_class = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
+                // Create a slug from category title for more specific CSS targeting if desired
+                $category_slug = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
                 // Build the class list
                 $category_custom_classes = $this->getSystemSetting('category-custom-classes');
-                $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug_class) . " alert"; // Base classes
+                $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug) . " alert"; // Base classes
                 if (!empty($user_defined_classes_sanitized)) {
                     $class_list .= " " . htmlspecialchars($user_defined_classes_sanitized); // Add user's classes (htmlspecialchars for attribute safety, though sanitized classes should be safe)
                 }
 
-                $html_output .= "<div id=\"" . htmlspecialchars($category_slug_class) . "\" class=\"" . $class_list . "\">";
+                $html_output .= "<div id=\"" . htmlspecialchars($category_slug) . "\" class=\"" . $class_list . "\">";
 
                 if (!empty($cat_title)) {
                     // Font awesome icon

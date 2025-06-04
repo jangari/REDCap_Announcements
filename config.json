@@ -2,7 +2,7 @@
     "name": "REDCap Announcements",
         "namespace": "INTERSECT\\Announcements",
         "description": "Serve announcements on homepage.",
-        "framework-version": 7,
+        "framework-version": 16,
         "enable-every-page-hooks-on-system-pages": true,
         "enable-every-page-hooks-on-login-form": true,
         "authors": [
