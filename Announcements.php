@@ -1,0 +1,263 @@
+<?php
+
+namespace INTERSECT\Announcements;
+
+use ExternalModules\AbstractExternalModule;
+use Project;
+use REDCap;
+
+class Announcements extends \ExternalModules\AbstractExternalModule {
+
+    /**
+     * Sorts an array of associative arrays in place.
+     *
+     * The sorting logic is as follows:
+     * 1. Items are primarily sorted by the $primary_sort_key numerically (ascending).
+     * 2. If a $primary_sort_key value is an empty string or not set, that item is
+     * considered to have "no primary order" and will be grouped after all items
+     * that do have a primary order.
+     * 3. If two items have the same $primary_sort_key value (and it's not empty),
+     * they are then sorted by the $secondary_sort_key numerically (ascending).
+     * 4. Items that have "no primary order" (empty $primary_sort_key) are sorted
+     * amongst themselves using the $secondary_sort_key numerically (ascending).
+     *
+     * @param array &$array The array to be sorted (passed by reference).
+     * @param string $primary_sort_key The key to use for the primary sort.
+     * @param string $secondary_sort_key The key to use for secondary sort / tie-breaking.
+     * @return bool True on success, false if the input $array is not a non-empty array.
+     */
+    private function sort_array_by_key(&$array, $primary_sort_key, $secondary_sort_key) {
+        // Ensure the input is a sortable array
+        if (!is_array($array) || empty($array)) {
+            return false; // Or trigger an error, or return the array as is
+        }
+
+        usort($array, function ($a, $b) use ($primary_sort_key, $secondary_sort_key) {
+            // Get and normalize primary key values
+            // Treat empty strings or non-existent keys for primary sort as 'null' (no defined order)
+            $primary_val_a = (isset($a[$primary_sort_key]) && $a[$primary_sort_key] !== '') ? (int)$a[$primary_sort_key] : null;
+            $primary_val_b = (isset($b[$primary_sort_key]) && $b[$primary_sort_key] !== '') ? (int)$b[$primary_sort_key] : null;
+
+            // Get and normalize secondary key values (assume they should exist and be numeric)
+            // Default to 0 if not set or not numeric, though ideally data should be clean.
+            $secondary_val_a = isset($a[$secondary_sort_key]) ? (int)$a[$secondary_sort_key] : 0;
+            $secondary_val_b = isset($b[$secondary_sort_key]) ? (int)$b[$secondary_sort_key] : 0;
+
+            // Case 1: Both items have a defined primary sort value
+            if ($primary_val_a !== null && $primary_val_b !== null) {
+                if ($primary_val_a < $primary_val_b) {
+                    return -1;
+                }
+                if ($primary_val_a > $primary_val_b) {
+                    return 1;
+                }
+                // If primary keys are the same, sort by secondary key
+                return $secondary_val_a < $secondary_val_b ? -1 : ($secondary_val_a > $secondary_val_b ? 1 : 0);
+            }
+            // Case 2: Only item 'a' has a defined primary sort value ('a' comes before 'b')
+            elseif ($primary_val_a !== null) {
+                return -1; // Items with a primary value come before those without
+            }
+            // Case 3: Only item 'b' has a defined primary sort value ('b' comes before 'a')
+            elseif ($primary_val_b !== null) {
+                return 1;  // Items with a primary value come before those without
+            }
+            // Case 4: Neither item has a defined primary sort value, so sort by secondary key
+            else {
+                return $secondary_val_a < $secondary_val_b ? -1 : ($secondary_val_a > $secondary_val_b ? 1 : 0);
+            }
+        });
+
+        return true; // `usort` sorts in place and returns true on success
+    }
+
+    function redcap_every_page_top($project_id = null)
+    {
+        $is_system_context = (
+            ($project_id === null) && // Not in a project context
+            ((PAGE == 'index.php' && !$_GET['action']) || (PAGE == 'index.php' && $_GET['action'] == 'myprojects')) // Either home or my projects page
+        );
+        $is_project_context = ($project_id !== null);
+        $is_user_logged_in = defined('USERID');
+        if (!$is_system_context && !$is_project_context) {
+            return; // No need to proceed.
+        }
+
+        $announcementProject = $this->getSystemSetting('announcement-project');
+        $now = date('Y-m-d H:i:s');
+        var_dump($announcementProject);
+        echo "Foobar";
+        $categoryParams = array
+            (
+                'project_id'=>$announcementProject,
+                'return_format'=>'json',
+                'event'=>'categories_arm_2',
+                'filterLogic'=>'[categories_arm_2][cat_active] = "1"',
+                'fields'=>array( 'record_id', 'category', 'fa', 'scope', 'cat_active', 'cat_title', 'cat_order', 'header', 'fallback', 'footer', 'custom_classes')
+            );
+        $announcementParams = array
+            (
+                'project_id'=>$announcementProject,
+                'return_format'=>'json',
+                'event'=>'announcements_arm_1',
+                'filterLogic'=>'
+                ( datediff([announcements_arm_1][since],"now","s","true") > 0 or [announcements_arm_1][since] = "" )
+                and
+                ( datediff("now",[announcements_arm_1][until],"s","true") > 0 or [announcements_arm_1][until] = "" )
+                and [announcements_arm_1][active] = "1"
+',
+        'fields'=>array('record_id', 'cat', 'desc', 'active', 'order', 'since', 'until')
+            );
+        $announcements = json_decode(REDCap::getData($announcementParams), true);
+        $categories = json_decode(REDCap::getData($categoryParams), true);
+        $this->sort_array_by_key($announcements, 'order', 'record_id');
+        $this->sort_array_by_key($categories, 'cat_order', 'record_id');
+        /* var_dump($announcements); */
+
+        // Step 1: Pre-group announcements by category ID for efficiency
+        $announcements_by_category = [];
+        foreach ($announcements as $ann) {
+            $category_id_for_ann = $ann['cat'] ?? null; // 'cat' field links to category record_id
+            if ($category_id_for_ann !== null) {
+                if (!isset($announcements_by_category[$category_id_for_ann])) {
+                    $announcements_by_category[$category_id_for_ann] = [];
+                }
+                $announcements_by_category[$category_id_for_ann][] = $ann;
+            }
+        }
+
+        $html_output = ""; // Initialize an empty string to build the HTML
+
+        // Step 2: Loop through each category
+        foreach ($categories as $category) {
+            $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
+            $cat_title = htmlentities($category['cat_title'] ?? '');
+            $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
+            $cat_footer = !empty($category['footer']) ? nl2br(htmlentities($category['footer'])) : '';
+            $cat_fallback = !empty($category['fallback']) ? nl2br(htmlentities($category['fallback'])) : '';
+
+            $user_defined_classes_raw = trim($category['custom_classes'] ?? '');
+            $user_defined_classes_sanitized = '';
+            if (!empty($user_defined_classes_raw)) {
+                // Sanitize the class string:
+                // 1. Allow only valid characters for CSS class names and spaces.
+                //    (alphanumeric, hyphens, underscores. Spaces are delimiters).
+                // 2. Normalize multiple spaces to single spaces.
+                $cleaned_classes = preg_replace('/[^a-zA-Z0-9\s_-]/', '', $user_defined_classes_raw);
+                $user_defined_classes_sanitized = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
+            }
+
+            // Get announcements for the current category
+            $current_cat_announcements = $announcements_by_category[$category['record_id']] ?? [];
+            $announcement_count = count($current_cat_announcements);
+
+            // Condition for displaying the category block, if category has announcements or a fallback configured, and if the context and scope align.
+            if ((!empty($category['fallback']) || $announcement_count > 0) &&
+                (($is_user_logged_in && $is_system_context && $category['scope___1'] == '1') || // Logged in users on system pages
+                ($is_user_logged_in && $is_project_context && $category['scope___2'] == '1') || // Logged in users on project pages
+                (!$is_user_logged_in && $category['scope___3'] == '1')) // Non-logged in users on login page
+            ) {
+
+                // Create a slug-like class from category title for more specific CSS targeting if desired
+                $category_slug_class = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
+                // Build the class list
+                $category_custom_classes = $this->getSystemSetting('category-custom-classes');
+                $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug_class) . " alert"; // Base classes
+                if (!empty($user_defined_classes_sanitized)) {
+                    $class_list .= " " . htmlspecialchars($user_defined_classes_sanitized); // Add user's classes (htmlspecialchars for attribute safety, though sanitized classes should be safe)
+                }
+
+                $html_output .= "<div id=\"" . htmlspecialchars($category_slug_class) . "\" class=\"" . $class_list . "\">";
+
+                if (!empty($cat_title)) {
+                    // Font awesome icon
+                    $category_fa_icon = isset($category['fa']) && !empty($category['fa']) ? "<i class=\"" . htmlspecialchars($category['fa'], ENT_QUOTES) . "\"></i> " : "";
+
+                    $html_output .= "<h4 class=\"alert-title rcannounce-title\">" . $category_fa_icon . $cat_title . "</h4>";
+                }
+
+                if ($announcement_count == 0) {
+                    // No announcements, display fallback (only if fallback message itself is not empty)
+                    if (!empty($cat_fallback)) { // This check is a bit redundant due to the outer IF, but safe.
+                        $cat_fallback = \REDCap::filterHtml($cat_fallback);
+                        $html_output .= "<p class=\"rcannounce-fallback\">" . $cat_fallback . "</p>";
+                    }
+                } else {
+                    // There are announcements, display them in a list
+                    if (!empty($cat_header)) {
+                        $cat_header = \REDCap::filterHtml($cat_header);
+                        $html_output .= "<p class=\"rcannounce-hdr\">" . $cat_header . "</p>";
+                    }
+                    foreach ($current_cat_announcements as $ann) {
+                        // Get the raw description field
+                        $raw_ann_desc = $ann['desc'] ?? ''; 
+                        $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
+
+                        // Output the sanitized HTML. We'll wrap it in a div for consistent structure and styling.
+                        $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
+                    }
+                    if (!empty($cat_footer)) {
+                        $cat_footer = \REDCap::filterHtml($cat_footer);
+                        $html_output .= "<p class=\"rcannounce-ftr\">" . $cat_footer . "</p>";
+                    }
+                }
+                $html_output .= "</div>"; // End .rc-announcement-category
+            }
+        }
+
+        // Wrap all category blocks in a main container. Set left-align since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div.
+        if (!empty($html_output)) {
+            $wrapper_custom_classes = $this->getSystemSetting('wrapper-custom-classes');
+            $final_html_output = "<div id=\"rcannounce-wrapper\" style=\"text-align: left;\" class=\"" . htmlspecialchars($wrapper_custom_classes) . "\">" . $html_output . "</div>";
+        }
+
+        // Output
+        if (!empty($final_html_output)) {
+            // Insert style now
+            $custom_css = $this->getSystemSetting('custom-css');
+            if (!empty($custom_css)) {
+                echo "<style type=\"text/css\">" . $custom_css . "</style>";
+            }
+            $escaped_js_html_output = json_encode($final_html_output);
+
+            echo "<script type=\"text/javascript\">
+                $(document).ready(function() {
+                    var announcementHTML = {$escaped_js_html_output};
+            var \$targetContainer; // Using $ prefix for jQuery object variable
+
+            if ($('#left_col').length) {
+                \$targetContainer = $('#left_col').children('div').first();
+                // console.log('REDCap Announcements: Using #left_col');
+            } else if ($('#pagecontent').length) {
+                \$targetContainer = $('#pagecontent');
+                // console.log('REDCap Announcements: Using #pagecontent');
+            } else if ($('#subheader').length) {
+                \$targetContainer = $('#subheader');
+                // console.log('REDCap Announcements: Using #subheader');
+            } else {
+                // Fallback if none of the preferred containers are found
+                // You might want to try #pagecontainer here as a primary fallback
+                // before resorting to 'body'
+                \$targetContainer = $('#pagecontainer');
+                if (!\$targetContainer.length) {
+                    \$targetContainer = $('body'); // Absolute fallback
+                    // console.log('REDCap Announcements: Using body as fallback');
+                } else {
+                    // console.log('REDCap Announcements: Using #pagecontainer as fallback');
+                }
+            }
+
+            // Prepend the announcements to the determined target container
+            if (\$targetContainer && \$targetContainer.length) {
+                \$targetContainer.prepend(announcementHTML);
+            } else {
+                // This case should be rare if 'body' is the ultimate fallback
+                console.error('REDCap Announcements Module: Could not find a suitable container to inject announcements.');
+            }
+        });
+    </script>";
+        }
+    }
+}
+
+

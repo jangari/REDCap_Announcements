@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="Announcements" AsOfDateTime="2025-06-04T17:10:46" CreationDateTime="2025-06-04T17:10:46" SourceSystem="REDCap" SourceSystemVersion="15.3.3">
+<Study OID="Project.Announcements">
+<GlobalVariables>
+	<StudyName>Announcements</StudyName>
+	<StudyDescription>This file contains the metadata, events, and data for REDCap project "Announcements".</StudyDescription>
+	<ProtocolName>Announcements</ProtocolName>
+	<redcap:RecordAutonumberingEnabled>1</redcap:RecordAutonumberingEnabled>
+	<redcap:CustomRecordLabel>[label] [category]</redcap:CustomRecordLabel>
+	<redcap:SecondaryUniqueField></redcap:SecondaryUniqueField>
+	<redcap:SecondaryUniqueFieldDisplayValue>0</redcap:SecondaryUniqueFieldDisplayValue>
+	<redcap:SecondaryUniqueFieldDisplayLabel>0</redcap:SecondaryUniqueFieldDisplayLabel>
+	<redcap:SchedulingEnabled>0</redcap:SchedulingEnabled>
+	<redcap:SurveysEnabled>0</redcap:SurveysEnabled>
+	<redcap:SurveyInvitationEmailField></redcap:SurveyInvitationEmailField>
+	<redcap:RandomizationEnabled>0</redcap:RandomizationEnabled>
+	<redcap:DisplayTodayNowButton>1</redcap:DisplayTodayNowButton>
+	<redcap:PreventBranchingEraseValues>0</redcap:PreventBranchingEraseValues>
+	<redcap:RequireChangeReason>0</redcap:RequireChangeReason>
+	<redcap:DataHistoryPopup>1</redcap:DataHistoryPopup>
+	<redcap:OrderRecordsByField></redcap:OrderRecordsByField>
+	<redcap:taskCompleteStatus>2</redcap:taskCompleteStatus>
+	<redcap:DataResolutionWorkflowEnabled>1</redcap:DataResolutionWorkflowEnabled>
+	<redcap:FieldCommentLogOptionEditDelete>1</redcap:FieldCommentLogOptionEditDelete>
+	<redcap:DataResolutionWorkflowHideClosedQueries>0</redcap:DataResolutionWorkflowHideClosedQueries>
+	<redcap:MyCapEnabled>0</redcap:MyCapEnabled>
+	<redcap:Purpose>0</redcap:Purpose>
+	<redcap:PurposeOther></redcap:PurposeOther>
+	<redcap:ProjectNotes></redcap:ProjectNotes>
+	<redcap:MissingDataCodes></redcap:MissingDataCodes>
+	<redcap:ProtectedEmailMode>0</redcap:ProtectedEmailMode>
+	<redcap:ProtectedEmailModeCustomText>REDCap Secure Messaging</redcap:ProtectedEmailModeCustomText>
+	<redcap:ProtectedEmailModeTrigger>ALL</redcap:ProtectedEmailModeTrigger>
+	<redcap:ProtectedEmailModeLogo></redcap:ProtectedEmailModeLogo>
+	<redcap:RecordDashboardsGroup>
+		<redcap:RecordDashboards title="Active" description="" filter_logic="[announcements_arm_1][active] = &#039;1&#039;" orientation="H" group_by="event" selected_forms_events="" arm="1" sort_event_id="announcements_arm_1" sort_field_name="cat" sort_order="ASC"/>
+	</redcap:RecordDashboardsGroup>
+</GlobalVariables>
+<MetaDataVersion OID="Metadata.Announcements_2025-06-04_1710" Name="Announcements" redcap:RecordIdField="record_id">
+	<Protocol>
+		<StudyEventRef StudyEventOID="Event.announcements_arm_1" OrderNumber="1" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.categories_arm_2" OrderNumber="2" Mandatory="No"/>
+	</Protocol>
+	<StudyEventDef OID="Event.announcements_arm_1" Name="Announcements (Arm 1: Announcements)" Type="Common" Repeating="No" redcap:EventName="Announcements" redcap:CustomEventLabel="" redcap:UniqueEventName="announcements_arm_1" redcap:ArmNum="1" redcap:ArmName="Announcements" redcap:DayOffset="0" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.announcements" OrderNumber="1" Mandatory="No" redcap:FormName="announcements"/>
+	</StudyEventDef>
+	<StudyEventDef OID="Event.categories_arm_2" Name="Categories (Arm 2: Categories)" Type="Common" Repeating="No" redcap:EventName="Categories" redcap:CustomEventLabel="" redcap:UniqueEventName="categories_arm_2" redcap:ArmNum="2" redcap:ArmName="Categories" redcap:DayOffset="1" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.categories" OrderNumber="1" Mandatory="No" redcap:FormName="categories"/>
+	</StudyEventDef>
+	<FormDef OID="Form.announcements" Name="Announcements" Repeating="No" redcap:FormName="announcements">
+		<ItemGroupRef ItemGroupOID="announcements.record_id" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="announcements.announcements_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.categories" Name="Categories" Repeating="No" redcap:FormName="categories">
+		<ItemGroupRef ItemGroupOID="categories.category" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="categories.categories_complete" Mandatory="No"/>
+	</FormDef>
+	<ItemGroupDef OID="announcements.record_id" Name="Announcements" Repeating="No">
+		<ItemRef ItemOID="record_id" Mandatory="No" redcap:Variable="record_id"/>
+		<ItemRef ItemOID="label" Mandatory="No" redcap:Variable="label"/>
+		<ItemRef ItemOID="cat" Mandatory="Yes" redcap:Variable="cat"/>
+		<ItemRef ItemOID="active" Mandatory="Yes" redcap:Variable="active"/>
+		<ItemRef ItemOID="order" Mandatory="No" redcap:Variable="order"/>
+		<ItemRef ItemOID="since" Mandatory="No" redcap:Variable="since"/>
+		<ItemRef ItemOID="until" Mandatory="No" redcap:Variable="until"/>
+		<ItemRef ItemOID="desc" Mandatory="Yes" redcap:Variable="desc"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="announcements.announcements_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="announcements_complete" Mandatory="No" redcap:Variable="announcements_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="categories.category" Name="Categories" Repeating="No">
+		<ItemRef ItemOID="category" Mandatory="Yes" redcap:Variable="category"/>
+		<ItemRef ItemOID="cat_active" Mandatory="Yes" redcap:Variable="cat_active"/>
+		<ItemRef ItemOID="scope___1" Mandatory="Yes" redcap:Variable="scope"/>
+		<ItemRef ItemOID="scope___2" Mandatory="Yes" redcap:Variable="scope"/>
+		<ItemRef ItemOID="scope___3" Mandatory="Yes" redcap:Variable="scope"/>
+		<ItemRef ItemOID="cat_order" Mandatory="No" redcap:Variable="cat_order"/>
+		<ItemRef ItemOID="category_san" Mandatory="No" redcap:Variable="category_san"/>
+		<ItemRef ItemOID="cat_title" Mandatory="No" redcap:Variable="cat_title"/>
+		<ItemRef ItemOID="fa" Mandatory="No" redcap:Variable="fa"/>
+		<ItemRef ItemOID="fa_preview" Mandatory="No" redcap:Variable="fa_preview"/>
+		<ItemRef ItemOID="header" Mandatory="No" redcap:Variable="header"/>
+		<ItemRef ItemOID="footer" Mandatory="No" redcap:Variable="footer"/>
+		<ItemRef ItemOID="fallback" Mandatory="No" redcap:Variable="fallback"/>
+		<ItemRef ItemOID="custom_classes" Mandatory="No" redcap:Variable="custom_classes"/>
+		<ItemRef ItemOID="cat_preview" Mandatory="No" redcap:Variable="cat_preview"/>
+		<ItemRef ItemOID="preview" Mandatory="No" redcap:Variable="preview"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="categories.categories_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="categories_complete" Mandatory="No" redcap:Variable="categories_complete"/>
+	</ItemGroupDef>
+	<ItemDef OID="record_id" Name="record_id" DataType="text" Length="999" redcap:Variable="record_id" redcap:FieldType="text">
+		<Question><TranslatedText>Record ID</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="label" Name="label" DataType="text" Length="999" redcap:Variable="label" redcap:FieldType="text">
+		<Question><TranslatedText>Label Not displayed but instead used as a record label for ease of finding the right announcement from the record status dashboard.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Label&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Not displayed but instead used as a record label for ease of finding the right announcement from the record status dashboard.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="cat" Name="cat" DataType="text" Length="2" redcap:Variable="cat" redcap:FieldType="sql" redcap:RequiredField="y">
+		<Question><TranslatedText>Category Go here to add and edit the categories</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Category&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Go &lt;a href=&quot;[redcap-version-url]DataEntry/record_status_dashboard.php?pid=[project-id]&amp;arm=2&quot;&gt;here&lt;/a&gt; to add and edit the categories&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="active" Name="active" DataType="boolean" Length="1" redcap:Variable="active" redcap:FieldType="yesno" redcap:RequiredField="y">
+		<Question><TranslatedText>Active Disable this alert by setting this to No.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Active&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Disable this alert by setting this to No.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<CodeListRef CodeListOID="active.choices"/>
+	</ItemDef>
+	<ItemDef OID="order" Name="order" DataType="integer" Length="999" redcap:Variable="order" redcap:FieldType="text" redcap:TextValidationType="int">
+		<Question><TranslatedText>Order A lower number appears higher on the page within this category. If two or more announcements have the same order, the record ID is used as the secondary sort. Any announcements with a blank order value will be sorted after all announcements with an order specified.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Order&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;A lower number appears higher on the page within this category. If two or more announcements have the same order, the record ID is used as the secondary sort. Any announcements with a blank order value will be sorted after all announcements with an order specified.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<RangeCheck Comparator="GE" SoftHard="Soft">
+			<CheckValue>0</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range (0 - no limit). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
+	</ItemDef>
+	<ItemDef OID="since" Name="since" DataType="datetime" Length="999" redcap:Variable="since" redcap:FieldType="text" redcap:TextValidationType="datetime_seconds_ymd">
+		<Question><TranslatedText>Show from Announcement appears on or after this date/time. Leave blank to show immediately (if active).</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Show from&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Announcement appears on or after this date/time. Leave blank to show immediately (if active).&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<RangeCheck Comparator="LE" SoftHard="Soft">
+			<CheckValue>[until]</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range (no limit - [until]). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
+	</ItemDef>
+	<ItemDef OID="until" Name="until" DataType="datetime" Length="999" redcap:Variable="until" redcap:FieldType="text" redcap:TextValidationType="datetime_seconds_ymd">
+		<Question><TranslatedText>Show until Announcement disappears after this date/time. Leave blank to show indefinitely (if active).</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Show until&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Announcement disappears after this date/time. Leave blank to show indefinitely (if active).&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<RangeCheck Comparator="GE" SoftHard="Soft">
+			<CheckValue>[since]</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range ([since] - no limit). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
+	</ItemDef>
+	<ItemDef OID="desc" Name="desc" DataType="text" Length="999" redcap:Variable="desc" redcap:FieldType="textarea" redcap:RequiredField="y" redcap:CustomAlignment="LH" redcap:FieldAnnotation="@RICHTEXT">
+		<Question><TranslatedText>Announcement Content</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="announcements_complete" Name="announcements_complete" DataType="text" Length="1" redcap:Variable="announcements_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="announcements_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="category" Name="category" DataType="text" Length="999" redcap:Variable="category" redcap:FieldType="text" redcap:RequiredField="y">
+		<Question><TranslatedText>Category Not displayed. Used for selecting a category for each announcement in the Announcements arm, and also used to construct an HTML id (rcannounce-category-[category_san]) that can be used when injecting CSS (with the CSS Injector EM).</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Category&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Not displayed. Used for selecting a category for each announcement in the &lt;a href=&quot;[redcap-version-url]/DataEntry/record_status_dashboard.php?pid=[project-id]&amp;arm=1&quot;&gt;Announcements arm&lt;/a&gt;, and also used to construct an HTML id&lt;/span&gt;&lt;/em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;em&gt; (&lt;/em&gt;&lt;code&gt;rcannounce-category-[category_san]&lt;/code&gt;&lt;em&gt;) that &lt;/em&gt;&lt;/span&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;em&gt;c&lt;/em&gt;an be used when injecting CSS (with the CSS Injector EM).&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="cat_active" Name="cat_active" DataType="boolean" Length="1" redcap:Variable="cat_active" redcap:FieldType="yesno" redcap:RequiredField="y" redcap:FieldAnnotation="@DEFAULT=&#039;1&#039;">
+		<Question><TranslatedText>Active? Disable this category entirely by setting this to No.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Active?&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Disable this category entirely by setting this to No.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<CodeListRef CodeListOID="cat_active.choices"/>
+	</ItemDef>
+	<ItemDef OID="scope___1" Name="scope___1" DataType="boolean" Length="1" redcap:Variable="scope" redcap:FieldType="checkbox" redcap:RequiredField="y">
+		<Question><TranslatedText>Scope Display only on system pages, on project pages, or login page Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is not logged in. Use this scope on its own to display announcements relating to gaining access, for example.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Scope&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Display only on system pages, on project pages, or login page&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is &lt;/span&gt;not&lt;span style=&quot;font-weight: normal;&quot;&gt; logged in. Use this scope on its own to display announcements relating to gaining access, for example.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<CodeListRef CodeListOID="scope___1.choices"/>
+	</ItemDef>
+	<ItemDef OID="scope___2" Name="scope___2" DataType="boolean" Length="1" redcap:Variable="scope" redcap:FieldType="checkbox" redcap:RequiredField="y">
+		<Question><TranslatedText>Scope Display only on system pages, on project pages, or login page Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is not logged in. Use this scope on its own to display announcements relating to gaining access, for example.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Scope&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Display only on system pages, on project pages, or login page&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is &lt;/span&gt;not&lt;span style=&quot;font-weight: normal;&quot;&gt; logged in. Use this scope on its own to display announcements relating to gaining access, for example.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<CodeListRef CodeListOID="scope___2.choices"/>
+	</ItemDef>
+	<ItemDef OID="scope___3" Name="scope___3" DataType="boolean" Length="1" redcap:Variable="scope" redcap:FieldType="checkbox" redcap:RequiredField="y">
+		<Question><TranslatedText>Scope Display only on system pages, on project pages, or login page Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is not logged in. Use this scope on its own to display announcements relating to gaining access, for example.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Scope&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Display only on system pages, on project pages, or login page&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Note: System pages includes the homepage where a user is logged in. The Login page option specifically refers to the homepage when a user is &lt;/span&gt;not&lt;span style=&quot;font-weight: normal;&quot;&gt; logged in. Use this scope on its own to display announcements relating to gaining access, for example.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<CodeListRef CodeListOID="scope___3.choices"/>
+	</ItemDef>
+	<ItemDef OID="cat_order" Name="cat_order" DataType="integer" Length="999" redcap:Variable="cat_order" redcap:FieldType="text" redcap:TextValidationType="int" redcap:CustomAlignment="RH">
+		<Question><TranslatedText>Order 
+Lowest number is displayed first on the page; where two categories have the same order index, they are sorted by the record ID. If no order value is present, the category is sorted below others with an order value.</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Order &lt;br&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Lowest number is displayed first on the page; where two categories have the same order index, they are sorted by the record ID. If no order value is present, the category is sorted &lt;/span&gt;below&lt;span style=&quot;font-weight: normal;&quot;&gt; others with an order value.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+		<RangeCheck Comparator="GE" SoftHard="Soft">
+			<CheckValue>0</CheckValue>
+			<ErrorMessage><TranslatedText>The value you provided is outside the suggested range (0 - no limit). This value is admissible, but you may wish to double check it.</TranslatedText></ErrorMessage>
+		</RangeCheck>
+	</ItemDef>
+	<ItemDef OID="category_san" Name="category_san" DataType="text" Length="999" redcap:Variable="category_san" redcap:FieldType="text" redcap:FieldAnnotation="@CALCTEXT(lower(trim(replace_text([category], &quot; &quot;, &quot;-&quot;))))
+@HIDDEN">
+		<Question><TranslatedText></TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="cat_title" Name="cat_title" DataType="text" Length="999" redcap:Variable="cat_title" redcap:FieldType="text">
+		<Question><TranslatedText>Title Displayed at the top of the box containing the announcements css class rcannounce-title</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Title&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Displayed at the top of the box containing the announcements&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;css class &lt;/span&gt;&lt;/em&gt;&lt;code&gt;rcannounce-title&lt;/code&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="fa" Name="fa" DataType="text" Length="999" redcap:Variable="fa" redcap:FieldType="text">
+		<Question><TranslatedText>Font Awesome icon This will display to the left of your announcement category title. Include the Font Awesome category as well as the icon name. For example, fas fa-graduation-cap for   Search the icons here Preview: [fa_preview]</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Font Awesome icon&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;This will display to the left of your announcement category title.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Include the Font Awesome category as well as the icon name. For example, &lt;/span&gt;&lt;/em&gt;&lt;code&gt;fas fa-graduation-cap&lt;/code&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt; for &lt;i class=&quot;fas fa-graduation-cap&quot;&gt;&lt;/i&gt; &lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Search the icons &lt;a href=&quot;https://fontawesome.com/search&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;here&lt;/a&gt;&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;Preview: [fa_preview]&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="fa_preview" Name="fa_preview" DataType="text" Length="999" redcap:Variable="fa_preview" redcap:FieldType="text" redcap:FieldAnnotation="@CALCTEXT(concat(&#039;&lt;i class=&quot;&#039;,[fa],&#039;&quot;&gt;&lt;/i&gt;&#039;))
+@HIDDEN">
+		<Question><TranslatedText></TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="header" Name="header" DataType="text" Length="999" redcap:Variable="header" redcap:FieldType="textarea" redcap:CustomAlignment="LH" redcap:FieldAnnotation="@RICHTEXT">
+		<Question><TranslatedText>Header Message to display above any announcements. Header is not displayed if category is empty. css class rcannounce-hdr</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Header&lt;/p&gt; &lt;p&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;em&gt;Message to display above any announcements. Header is not displayed if category is empty.&lt;/em&gt;&lt;/span&gt;&lt;/p&gt; &lt;p&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;em&gt;css class&lt;/em&gt; &lt;/span&gt;&lt;code&gt;rcannounce-hdr&lt;/code&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="footer" Name="footer" DataType="text" Length="999" redcap:Variable="footer" redcap:FieldType="textarea" redcap:CustomAlignment="LH" redcap:FieldAnnotation="@RICHTEXT">
+		<Question><TranslatedText>Footer message Message to display beneath any announcements. Footer is not displayed if category is empty. css class rcannounce-ftr</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Footer message&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Message to display beneath any announcements. Footer is not displayed if category is empty.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;css class &lt;code&gt;rcannounce-ftr&lt;/code&gt;&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="fallback" Name="fallback" DataType="text" Length="999" redcap:Variable="fallback" redcap:FieldType="textarea" redcap:CustomAlignment="LH" redcap:FieldAnnotation="@RICHTEXT">
+		<Question><TranslatedText>Fallback message Message to display if there are no current announcements in this category; if left blank, then when no announcements exist in this category, the category is not displayed at all. css class rcannounce-fallback</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Fallback message&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Message to display if there are no current announcements in this category; if left blank, then when no announcements exist in this category, the category is not displayed at all.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;css class &lt;code&gt;rcannounce-fallback&lt;/code&gt;&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="custom_classes" Name="custom_classes" DataType="text" Length="999" redcap:Variable="custom_classes" redcap:FieldType="text">
+		<Question><TranslatedText>Custom CSS classes All announcements contain the alert class, but additional classes may be added here. They will be added to the div that contains this category and all of its announcements. See the Bootstrap documentation for useful predefined classes to style your announcement categories. </TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Custom CSS classes&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;All announcements contain the &lt;/span&gt;&lt;/em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;code&gt;alert&lt;/code&gt;&lt;/span&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt; class, but additional classes may be added here. They will be added to the div that contains this category and all of its announcements.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt; &lt;p&gt;&lt;em&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;See the &lt;a href=&quot;https://getbootstrap.com/docs/5.0/components/alerts/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Bootstrap documentation&lt;/a&gt; for useful predefined classes to style your announcement categories. &lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="cat_preview" Name="cat_preview" DataType="text" Length="999" redcap:Variable="cat_preview" redcap:FieldType="text" redcap:FieldAnnotation="@CALCTEXT(concat(
+&#039;&lt;div class=&quot;alert &#039;,
+[custom_classes],
+&#039;&quot;&gt;&lt;h4&gt;&lt;i class=&quot;&#039;,
+[fa],
+&#039;&quot;&gt;&lt;/i&gt; &#039;,
+[cat_title],
+&#039;&lt;/h4&gt;&lt;p&gt;&#039;,
+[header],
+&#039;&lt;/p&gt;&lt;p&gt;This is an example announcement body.&lt;/p&gt;&lt;p&gt;&#039;,
+[footer],
+&#039;&lt;/p&gt;&lt;/div&gt;&#039;
+))
+@HIDDEN">
+		<Question><TranslatedText></TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="preview" Name="preview" DataType="text" Length="999" redcap:Variable="preview" redcap:FieldType="descriptive">
+		<Question><TranslatedText>Preview: [cat_preview]</TranslatedText><redcap:FormattedTranslatedText>&lt;div class=&quot;rich-text-field-label&quot;&gt;&lt;p&gt;Preview:&lt;/p&gt; &lt;p&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;[cat_preview]&lt;/span&gt;&lt;/p&gt;&lt;/div&gt;</redcap:FormattedTranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="categories_complete" Name="categories_complete" DataType="text" Length="1" redcap:Variable="categories_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="categories_complete.choices"/>
+	</ItemDef>
+	<CodeList OID="active.choices" Name="active" DataType="boolean" redcap:Variable="active">
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Yes</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>No</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="announcements_complete.choices" Name="announcements_complete" DataType="text" redcap:Variable="announcements_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="cat_active.choices" Name="cat_active" DataType="boolean" redcap:Variable="cat_active">
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Yes</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>No</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="scope___1.choices" Name="scope___1" DataType="boolean" redcap:Variable="scope" redcap:CheckboxChoices="1, System | 2, Project | 3, Login page">
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Checked</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Unchecked</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="scope___2.choices" Name="scope___2" DataType="boolean" redcap:Variable="scope" redcap:CheckboxChoices="1, System | 2, Project | 3, Login page">
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Checked</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Unchecked</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="scope___3.choices" Name="scope___3" DataType="boolean" redcap:Variable="scope" redcap:CheckboxChoices="1, System | 2, Project | 3, Login page">
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Checked</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Unchecked</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="categories_complete.choices" Name="categories_complete" DataType="text" redcap:Variable="categories_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+</MetaDataVersion>
+</Study>
+</ODM>

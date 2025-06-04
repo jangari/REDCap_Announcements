@@ -1,0 +1,50 @@
+{
+    "name": "REDCap Announcements",
+        "namespace": "INTERSECT\\Announcements",
+        "description": "Serve announcements on homepage.",
+        "framework-version": 7,
+        "enable-every-page-hooks-on-system-pages": true,
+        "enable-every-page-hooks-on-login-form": true,
+        "authors": [
+            {
+                "name": "Aidan Wilson",
+                "email": "aidan.wilson@intersect.org.au",
+                "institution": "Intersect Australia"
+            }
+        ],
+        "system-settings": [
+            {
+                "key": "announcement-project",
+                "name": "<strong>Announcement Project</strong><br/>See the Control Centre Announcements Setup page for instructions on creating this project from the supplied template.",
+                "type": "project-id",
+                "required": true
+            },
+            {
+                "key": "custom-css",
+                "name": "<strong>Custom CSS for Announcements</strong><br/>Injected on any page where announcements are displayed.",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "wrapper-custom-classes",
+                "name": "<strong>Announcement Wrapper Custom CSS Classes</strong><br/>Applied to the parent div.",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "category-custom-classes",
+                "name": "<strong>Announcement Category Custom CSS Classes</strong><br/>Applied to each category div, and intended to allow for forcing style consistency with aspects like margins, text alignment, shadow, etc.",
+                "type": "text",
+                "required": false
+            }
+        ],
+        "links": {
+            "control-center": [
+                {
+                    "name": "Announcements Setup",
+                    "icon": "fas fa-bullhorn",
+                    "url": "setup.php"
+                }
+            ]
+        }
+}
