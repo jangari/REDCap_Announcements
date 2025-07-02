@@ -15,13 +15,15 @@ Use cases include:
 
 This module can be installed from the REDCap Repo, or from GitHub.
 
-To enable announcements to appear in a project context, the module must be enabled on all projects.
+**Important:** To enable announcements to appear in a project context (where 'Project' is checked for 'Scope'), the module must be enabled on all projects in the system-wide configuration. It should also be hidden from regular users' view by checking the _Hide this module from non-admins in the list of enabled modules on each project_ option.
 
 ## Configuration
 
 ### The Announcements Project
 
 The module fetches announcement details from records in a designated REDCap project (specified in the module configuration). This project should be built from the Project XML file supplied in this repository ([here](assets/Announcements_project_template.xml)). The project's data dictionary contains two instruments - "Categories" and "Announcements" - and two arms - "Categories" and "Announcements", so the single project can manage both announcements and the categories they fall within.
+
+Further instructions on creating and setting up the Announcements project can be found from the 'Announcements Setup' page that this module adds to the Control Center External Module pages section. **Important:** The Announcements project must be built correctly, and in particular, the Dynamic SQL field that is used to populate a drop-down list of categories, must be configured by an administrator, since it cannot be automatically populated from the data dictionary.
 
 ### Categories
 
@@ -54,6 +56,18 @@ After creating categories, individual announcements can be created within those 
 | Show Until | Datetime | Announcement disappears after this date/time. Leave blank to show indefinitely (if active). |
 | Announcement Content | Text | The main content of the announcement. **HTML is allowed.** Use the rich-text editor to format this content (bold, italics, lists, alignment, line breaks, links etc.). |
 
+## Scope
+
+Categories of announcements may be configured to be displayed in specific contexts, called Scope. The available scopes are as follows:
+
+| Scope | Description |
+| --- | --- |
+| System | The My Projects page and the New Project page. |
+| Project | The project home page and the project setup page, these being the two pages that a user is most likely to navigate to regardless of the status of their project. **Requires the module to be enabled on all projects.** |
+| Login | The REDCap login page, where announcements are displayed to unauthenticated users. |
+
+Administrators may choose which categories of announcements are relevant to which scopes by checking the appropriate checkbox option for that category in their Announcements project. For example, training opportunities might be relevant for System and Login pages, but would clutter the Project pages too much, whereas outage notifications are probably relevant in all scopes. An announcement about how to get access to REDCap is only relevant for the Login scope (however this is more easily done using the Login text in Control Center).
+
 ## Styling
 
 This module presents a number of ways to style alerts and their contents.
@@ -82,7 +96,7 @@ As such, for best results you should ensure that both classes *and* explicit sty
 This module creates whole new HTML divs: a div for the entire block of announcements, as well as a div per category. Each of these is assigned IDs and classes based on the category. These IDs and classes can then be used for targeting when inserting custom CSS in the module's system configuration. The schema is as follows (assumes the presence of two categories labelled `outages` and `training` for illustration purposes):
 
 ```html
-<div id="rcannounce-wrapper" class="{wrapper_custom_classes}">
+<div id="rcannounce-wrapper" class="rcannounce-context-{context} {wrapper_custom_classes}">
     <div id="rc-announce-cat-outages" class="rcannounce-category rcannounce-cat-outages alert {category_custom_classes} {custom_classes}">
         <h4 class="alert-title rcannounce-title">{title}</h4>
         <p class="rcannounce-hdr">{header}</p>
@@ -98,7 +112,7 @@ This module creates whole new HTML divs: a div for the entire block of announcem
 </div>
 ```
 
-**Note:** `{wrapper_custom_classes}` and `{category_custom_classes}` pertain to the module system configuration options, while other variables pertain to the values of the project variables.
+**Note:** `{wrapper_custom_classes}` and `{category_custom_classes}` pertain to the module system configuration options, while other variables pertain to the values of the project variables. 
 
 This allows for injection of CSS in the module configuration, for example to display categories in a flex container. The following CSS produces a multi-column layout as shown in the screenshot below.
 
@@ -115,6 +129,16 @@ This allows for injection of CSS in the module configuration, for example to dis
 ```
 
 ![Flexbox example](img/redcap_announce_flexbox.png)
+
+**Note:** `{context}` is either `system`, `project`, or `login`, depending on the context in which the announcements are displayed. The `rcannounce-context-{context}` class therefore allows the administrator to target the announcement wrapper div or any of its children in specific contexts.
+
+This is particularly useful to adjust the width carefully to fit the page. The position in the page in which announcements are placed on Project pages by default means that announcements use the full width of the page, apart from the left sidebar. This can be corrected with the following rule:
+
+```css
+.rcannounce-context-project {
+    max-width: 800px;
+}
+```
 
 ## Todo
 
