@@ -63,19 +63,52 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
     function redcap_every_page_top($project_id = null)
     {
-        $is_system_context = (
-            ($project_id === null) && // Not in a project context
-            ((PAGE == 'index.php' && !$_GET['action']) || (PAGE == 'index.php' && $_GET['action'] == 'myprojects')) // Either home or my projects page
-        );
-        $is_project_context = ($project_id !== null);
-        $is_user_logged_in = defined('USERID');
+        // 1. Determine the page context
+        $page_context = '';
+        if ($project_id !== null) {
+            // If a project_id exists, we are in a 'project' context.
+            $page_context = 'project';
+        } elseif (!defined('USERID')) {
+            // If not in a project and no user is logged in, it's the 'login' page context.
+            $page_context = 'login';
+        } else {
+            // If not in a project but a user IS logged in, it's a 'system' context.
+            $page_context = 'system';
+        }
 
-        if (!$is_system_context && !$is_project_context) {
+        echo "<script>var page_context = '$page_context';</script>";
+        // 2. Decide if the module should run based on context and specific page restrictions
+        $run_module_on_this_page = false;
+        switch ($page_context) {
+        case 'login':
+            // Always run on the login page when the context is matched.
+            $run_module_on_this_page = true;
+            break;
+
+        case 'system':
+            // For system context, only run on the home page or "My Projects" page.
+            $action = $_GET['action'] ?? '';
+            if (PAGE === 'index.php' && ($action === '' || $action === 'myprojects')) {
+                $run_module_on_this_page = true;
+            }
+            break;
+
+        case 'project':
+            // For project context, only run on the project home page or Project Setup page.
+            if ($this->isREDCapPage('index.php') || $this->isREDCapPage('ProjectSetup/index.php')) {
+                $run_module_on_this_page = true;
+            }
+            break;
+        }
+
+        // 3. Final check to exit the module if we are not in a context in which it ought to run
+        if (!$run_module_on_this_page) {
             return;
         }
 
+        // Retrieve announcement data
         $announcementProject = $this->getSystemSetting('announcement-project');
-        $now = date('Y-m-d H:i:s');
+        // Get active categories
         $categoryParams = array
             (
                 'project_id'=>$announcementProject,
@@ -84,6 +117,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 'filterLogic'=>'[categories_arm_2][cat_active] = "1"',
                 'fields'=>array( 'record_id', 'category', 'fa', 'scope', 'cat_active', 'cat_title', 'cat_order', 'header', 'fallback', 'footer', 'custom_classes')
             );
+        // Get active announcements that are within their date range
         $announcementParams = array
             (
                 'project_id'=>$announcementProject,
@@ -141,9 +175,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
             // Condition for displaying the category block, if category has announcements or a fallback configured, and if the context and scope align.
             if ((!empty($category['fallback']) || $announcement_count > 0) &&
-                (($is_user_logged_in && $is_system_context && $category['scope___1'] == '1') || // Logged in users on system pages
-                ($is_user_logged_in && $is_project_context && $category['scope___2'] == '1') || // Logged in users on project pages
-                (!$is_user_logged_in && $category['scope___3'] == '1')) // Non-logged in users on login page
+                (($page_context === 'system' && ($category['scope___1'] ?? 0) == '1') || // Logged in users on system pages
+                ($page_context === 'project' && ($category['scope___2'] ?? 0) == '1') || // Logged in users on project pages
+                ($page_context === 'login' && ($category['scope___3'] ?? 0) == '1')) // Non-logged in users on login page
             ) {
 
                 // Create a slug from category title for more specific CSS targeting if desired
@@ -195,8 +229,27 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         // Wrap all category blocks in a main container. Set left-align since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div.
         if (!empty($html_output)) {
-            $wrapper_custom_classes = $this->getSystemSetting('wrapper-custom-classes');
-            $final_html_output = "<div id=\"rcannounce-wrapper\" style=\"text-align: left;\" class=\"" . htmlspecialchars($wrapper_custom_classes) . "\">" . $html_output . "</div>";
+            // 1. Get user-defined classes from module settings
+            $wrapper_custom_classes = trim($this->getSystemSetting('wrapper-custom-classes') ?? '');
+
+            // 2. Start building the class list with base classes
+            $class_list = [
+                'rcannounce-wrapper',                      // Base class for wrapper
+                'rcannounce-context-' . $page_context      // Dynamic class for context
+            ];
+
+            // 3. Add the user's custom classes only if they exist
+            if (!empty($wrapper_custom_classes)) {
+                // Sanitize and add the user's classes
+                $cleaned_classes = preg_replace('/[^a-zA-Z0-9\s_-]/', '', $wrapper_custom_classes);
+                $class_list[] = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
+            }
+
+            // 4. Set left-alignment for login context only, since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div. This left alignment it then overridden by the announcement HTML anyway.
+            $style_attr = $page_context === 'login' ? ' style="text-align: left;"' : '';
+
+            // 5. Implode the array into a final, clean class string and build the div
+            $final_html_output = "<div id=\"rcannounce-wrapper\" " . $style_attr . " class=\"" . htmlspecialchars(implode(' ', $class_list)) . "\">" . $html_output . "</div>";
         }
 
         // Output
@@ -211,27 +264,20 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             echo "<script type=\"text/javascript\">
                 $(document).ready(function() {
                     var announcementHTML = {$escaped_js_html_output};
-            var \$targetContainer; // Using $ prefix for jQuery object variable
+            var \$targetContainer;
 
             if ($('#left_col').length) {
-                \$targetContainer = $('#left_col').children('div').first();
-                // console.log('REDCap Announcements: Using #left_col');
+                \$targetContainer = $('#left_col').children('div').first(); // Login page
             } else if ($('#pagecontent').length) {
-                \$targetContainer = $('#pagecontent');
-                // console.log('REDCap Announcements: Using #pagecontent');
+                \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
             } else if ($('#subheader').length) {
-                \$targetContainer = $('#subheader');
-                // console.log('REDCap Announcements: Using #subheader');
+                \$targetContainer = $('#subheader'); // Project pages
             } else {
                 // Fallback if none of the preferred containers are found
-                // You might want to try #pagecontainer here as a primary fallback
-                // before resorting to 'body'
                 \$targetContainer = $('#pagecontainer');
                 if (!\$targetContainer.length) {
                     \$targetContainer = $('body'); // Absolute fallback
-                    // console.log('REDCap Announcements: Using body as fallback');
                 } else {
-                    // console.log('REDCap Announcements: Using #pagecontainer as fallback');
                 }
             }
 
