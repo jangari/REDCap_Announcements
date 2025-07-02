@@ -1,7 +1,7 @@
 {
     "name": "REDCap Announcements",
         "namespace": "INTERSECT\\Announcements",
-        "description": "Serve announcements on homepage.",
+        "description": "Allows REDCap administrators to configure announcements within categories, that will display to users in specified contexts (e.g., system pages, project pages, or on the REDCap login page) managed as records in an Announcements project. Announcements can be timed to display between specific dates and times, and fallback text for each category can be specified if no current announcements exist in the category.",
         "framework-version": 16,
         "enable-every-page-hooks-on-system-pages": true,
         "enable-every-page-hooks-on-login-form": true,
