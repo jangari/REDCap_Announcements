@@ -65,12 +65,12 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
     {
         // 1. Determine the page context
         $page_context = '';
-        if ($project_id !== null) {
-            // If a project_id exists, we are in a 'project' context.
-            $page_context = 'project';
-        } elseif (!defined('USERID')) {
+        if (!defined('USERID')) {
             // If not in a project and no user is logged in, it's the 'login' page context.
             $page_context = 'login';
+        } elseif ($project_id !== null) {
+            // If a project_id exists, we are in a 'project' context.
+            $page_context = 'project';
         } else {
             // If not in a project but a user IS logged in, it's a 'system' context.
             $page_context = 'system';
