@@ -3,7 +3,6 @@
 namespace INTERSECT\Announcements;
 
 use ExternalModules\AbstractExternalModule;
-use Project;
 use REDCap;
 
 class Announcements extends \ExternalModules\AbstractExternalModule {
@@ -63,6 +62,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
     function redcap_every_page_top($project_id = null)
     {
+        // Set debug mode
+        $debug = $this->getSystemSetting('debug');
+
         // 1. Determine the page context
         $page_context = '';
         if (!defined('USERID')) {
@@ -76,7 +78,6 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             $page_context = 'system';
         }
 
-        echo "<script>var page_context = '$page_context';</script>";
         // 2. Decide if the module should run based on context and specific page restrictions
         $run_module_on_this_page = false;
         switch ($page_context) {
@@ -103,11 +104,21 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         // 3. Final check to exit the module if we are not in a context in which it ought to run
         if (!$run_module_on_this_page) {
+            if ($debug) {
+                echo "<script>console.log('Announcements Module: Not in a context in which it should run.');</script>";
+            }
             return;
         }
 
-        // Retrieve announcement data
+        // Retrieve announcement project and exit if not set, otherwise module exception is thrown
         $announcementProject = $this->getSystemSetting('announcement-project');
+        if (empty($announcementProject)) {
+            if ($debug) {
+                echo "<script>console.log('Announcements Module: No announcement project specified.');</script>";
+            }
+            return;
+        }
+
         // Get active categories
         $categoryParams = array
             (
@@ -117,6 +128,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 'filterLogic'=>'[categories_arm_2][cat_active] = "1"',
                 'fields'=>array( 'record_id', 'category', 'fa', 'scope', 'cat_active', 'cat_title', 'cat_order', 'header', 'fallback', 'footer', 'custom_classes')
             );
+
         // Get active announcements that are within their date range
         $announcementParams = array
             (
@@ -131,6 +143,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ',
                 'fields'=>array('record_id', 'cat', 'desc', 'active', 'order', 'since', 'until')
             );
+
         $announcements = json_decode(REDCap::getData($announcementParams), true);
         $categories = json_decode(REDCap::getData($categoryParams), true);
         $this->sort_array_by_key($announcements, 'order', 'record_id');
@@ -148,10 +161,23 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             }
         }
 
+        // If debug mode enabled, report how many categories and how many announcements.
+        if ($debug) {
+            echo "<script>
+                console.log('Announcements Module Debug');
+                console.log('Context: " . $page_context . "');
+                console.log('Announcement Project: " . $announcementProject . "');
+                console.log('Found " . count($announcements) . " announcements in " . count($categories) . " categories');
+                </script>";
+        }
+
         $html_output = ""; // Initialize an empty string to build the HTML
 
         // Step 2: Loop through each category
         foreach ($categories as $category) {
+            if ($debug) {
+                echo "<script>console.log('Processing category: " . $category['category'] . "');</script>";
+            }
             $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
             $cat_title = htmlentities($category['cat_title'] ?? '');
             $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
@@ -179,7 +205,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ($page_context === 'project' && ($category['scope___2'] ?? 0) == '1') || // Logged in users on project pages
                 ($page_context === 'login' && ($category['scope___3'] ?? 0) == '1')) // Non-logged in users on login page
             ) {
-
+                if ($debug) { 
+                    echo "<script>console.log('Found " . $announcement_count . " announcements for category: " . $category['category'] . "');</script>";
+                }
                 // Create a slug from category title for more specific CSS targeting if desired
                 $category_slug = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
                 // Build the class list
@@ -194,7 +222,6 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 if (!empty($cat_title)) {
                     // Font awesome icon
                     $category_fa_icon = isset($category['fa']) && !empty($category['fa']) ? "<i class=\"" . htmlspecialchars($category['fa'], ENT_QUOTES) . "\"></i> " : "";
-
                     $html_output .= "<h4 class=\"alert-title rcannounce-title\">" . $category_fa_icon . $cat_title . "</h4>";
                 }
 
@@ -224,6 +251,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     }
                 }
                 $html_output .= "</div>"; // End .rc-announcement-category
+            } else {
+                if ($debug) {
+                    echo "<script>console.log('Category " . $category['category'] . " either empty and no fallback message or scope does not align. Skipping.');</script>";
+                }
             }
         }
 
@@ -247,6 +278,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
             // 4. Set left-alignment for login context only, since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div. This left alignment it then overridden by the announcement HTML anyway.
             $style_attr = $page_context === 'login' ? ' style="text-align: left;"' : '';
+
+            if ($this->getSystemSetting('fix-project-width') && $page_context === 'project') {
+               $style_attr = ' style="max-width: 800px;" ';
+            }
 
             // 5. Implode the array into a final, clean class string and build the div
             $final_html_output = "<div id=\"rcannounce-wrapper\" " . $style_attr . " class=\"" . htmlspecialchars(implode(' ', $class_list)) . "\">" . $html_output . "</div>";
@@ -272,13 +307,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
             } else if ($('#subheader').length) {
                 \$targetContainer = $('#subheader'); // Project pages
-            } else {
-                // Fallback if none of the preferred containers are found
+            } else if (!\$targetContainer.length) {
                 \$targetContainer = $('#pagecontainer');
-                if (!\$targetContainer.length) {
-                    \$targetContainer = $('body'); // Absolute fallback
-                } else {
-                }
+            } else {
+                \$targetContainer = $('body'); // Absolute fallback
             }
 
             // Prepend the announcements to the determined target container
@@ -286,12 +318,11 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 \$targetContainer.prepend(announcementHTML);
             } else {
                 // This case should be rare if 'body' is the ultimate fallback
-                console.error('REDCap Announcements Module: Could not find a suitable container to inject announcements.');
+                console.error('Announcements Module: Could not find a suitable container to inject announcements.');
             }
         });
     </script>";
         }
     }
 }
-
 

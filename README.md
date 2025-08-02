@@ -19,11 +19,13 @@ This module can be installed from the REDCap Repo, or from GitHub.
 
 ## Configuration
 
+A link to the Announcements project XML file and instructions for its implementation can be found on the Control Center External Module page [_Announcements Setup_](?prefix=announcements&page=setup).
+
 ### The Announcements Project
 
-The module fetches announcement details from records in a designated REDCap project (specified in the module configuration). This project should be built from the Project XML file supplied in this repository ([here](assets/Announcements_project_template.xml)). The project's data dictionary contains two instruments - "Categories" and "Announcements" - and two arms - "Categories" and "Announcements", so the single project can manage both announcements and the categories they fall within.
+The module fetches announcement and category details from records in a designated REDCap project (specified in the module configuration). This project should be built from the Project XML file linked to from the setup page. The project's data dictionary contains two instruments - "Categories" and "Announcements" - and two arms - "Categories" and "Announcements", so the single project can manage both announcements and the categories they fall within.
 
-Further instructions on creating and setting up the Announcements project can be found from the 'Announcements Setup' page that this module adds to the Control Center External Module pages section. **Important:** The Announcements project must be built correctly, and in particular, the Dynamic SQL field that is used to populate a drop-down list of categories, must be configured by an administrator, since it cannot be automatically populated from the data dictionary.
+**Important:** The Announcements project must be built correctly, and in particular, the Dynamic SQL field that is used to populate a drop-down list of categories, must be configured by an administrator, since it cannot be automatically populated from the data dictionary.
 
 ### Categories
 
@@ -114,7 +116,7 @@ This module creates whole new HTML divs: a div for the entire block of announcem
 
 **Note:** `{wrapper_custom_classes}` and `{category_custom_classes}` pertain to the module system configuration options, while other variables pertain to the values of the project variables. 
 
-This allows for injection of CSS in the module configuration, for example to display categories in a flex container. The following CSS produces a multi-column layout as shown in the screenshot below.
+This allows for injection of CSS in the module configuration, for example to display categories in a flex container. The following CSS produces a multi-column layout as shown in the screenshot below. To achieve this effect, copy the css below into the `Custom CSS` field in the module configuration:
 
 ```css
 #rcannounce-wrapper {
@@ -139,6 +141,8 @@ This is particularly useful to adjust the width carefully to fit the page. The p
     max-width: 800px;
 }
 ```
+
+For ease, there is a configuration option to automatically add this styling to the parent div on project pages.
 
 ## Todo
 

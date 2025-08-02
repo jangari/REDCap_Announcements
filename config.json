@@ -14,6 +14,12 @@
         ],
         "system-settings": [
             {
+                "key": "debug",
+                "name": "<strong>Enable Debug Mode</strong><br/>Output additional information to the JavaScript console log for debugging purposes.",
+                "type": "checkbox",
+                "required": false
+            },
+            {
                 "key": "announcement-project",
                 "name": "<strong>Announcement Project</strong><br/>See the Control Centre Announcements Setup page for instructions on creating this project from the supplied template.",
                 "type": "project-id",
@@ -36,6 +42,11 @@
                 "name": "<strong>Announcement Category Custom CSS Classes</strong><br/>Applied to each category div, and intended to allow for forcing style consistency with aspects like margins, text alignment, shadow, etc.",
                 "type": "text",
                 "required": false
+            },
+            {
+                "key": "fix-project-width",
+                "name": "<strong>Fix Width on Project pages</strong><br/>If enabled, the max width of the announcement div will be fixed to 800px in Project context.<br/><em>Can also be achieved with some custom injected css.</em>",
+                "type": "checkbox"
             }
         ],
         "links": {
