@@ -89,7 +89,15 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         case 'system':
             // For system context, only run on the home page or "My Projects" page.
             $action = $_GET['action'] ?? '';
-            if (PAGE === 'index.php' && ($action === '' || $action === 'myprojects')) {
+
+            // Get the filename of the currently running script.
+            $currentPageFile = basename($_SERVER['SCRIPT_NAME']);
+
+            // Will evaluate to true if either the script filename OR the PAGE constant is 'index.php'.
+            if (
+                ($currentPageFile === 'index.php' || PAGE === 'index.php') &&
+                ($action === '' || $action === 'myprojects')
+            ) {
                 $run_module_on_this_page = true;
             }
             break;
