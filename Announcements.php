@@ -90,12 +90,16 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             // For system context, only run on the home page or "My Projects" page.
             $action = $_GET['action'] ?? '';
 
-            // Get the filename of the currently running script.
-            $currentPageFile = basename($_SERVER['SCRIPT_NAME']);
+            // Get the full path of the currently running script.
+            $current_script_path = $_SERVER['SCRIPT_NAME'];
 
-            // Will evaluate to true if either the script filename OR the PAGE constant is 'index.php'.
+            // Use APP_PATH_WEBROOT_PARENT to get the stable, unversioned path to REDCap.
+            $redcap_base_path = APP_PATH_WEBROOT_PARENT;              // e.g., '/redcap/'
+            $redcap_index_path = APP_PATH_WEBROOT_PARENT . 'index.php'; // e.g., '/redcap/index.php'
+
+            // Check the server's script path against the stable REDCap base path.
             if (
-                ($currentPageFile === 'index.php' || PAGE === 'index.php') &&
+                ($current_script_path === $redcap_base_path || $current_script_path === $redcap_index_path) &&
                 ($action === '' || $action === 'myprojects')
             ) {
                 $run_module_on_this_page = true;
