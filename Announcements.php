@@ -60,6 +60,39 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         return true; // `usort` sorts in place and returns true on success
     }
 
+    /**
+     * Checks if a given project ID is present in a comma-separated list of IDs and ranges.
+     *
+     * @param int $current_pid The project ID to check for.
+     * @param string $pid_list_string The string containing IDs/ranges (e.g., "12, 45, 100-110").
+     * @return bool True if the PID is in the list, false otherwise.
+     */
+    private function isPidInList($current_pid, $pid_list_string)
+    {
+        if (empty($pid_list_string) || !is_numeric($current_pid)) {
+            return false;
+        }
+
+        // Remove all whitespace and split the string by commas
+        $parts = explode(',', str_replace(' ', '', $pid_list_string));
+
+        foreach ($parts as $part) {
+            // Check if the part is a range (e.g., "100-110")
+            if (strpos($part, '-') !== false) {
+                list($start, $end) = explode('-', $part);
+                if (is_numeric($start) && is_numeric($end) && $current_pid >= $start && $current_pid <= $end) {
+                    return true; // The PID is within this range
+                }
+            }
+            // Check if the part is a single ID
+            elseif (is_numeric($part) && $current_pid == $part) {
+                return true; // The PID is an exact match
+            }
+        }
+
+        return false; // No match was found
+    }
+
     function redcap_every_page_top($project_id = null)
     {
         // Set debug mode
@@ -153,7 +186,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ( datediff("now",[announcements_arm_1][until],"s","true") > 0 or [announcements_arm_1][until] = "" )
                 and [announcements_arm_1][active] = "1"
                 ',
-                'fields'=>array('record_id', 'cat', 'desc', 'active', 'order', 'since', 'until')
+                'fields'=>array('record_id', 'label', 'cat', 'desc', 'named_filter', 'pid_list', 'active', 'order', 'since', 'until')
             );
 
         $announcements = json_decode(REDCap::getData($announcementParams), true);
@@ -185,31 +218,93 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         $html_output = ""; // Initialize an empty string to build the HTML
 
-        // Step 2: Loop through each category
+        // Lazy-load admin-defined filters just once, outside the main loop
+        $all_named_filters = null; 
+
         foreach ($categories as $category) {
             if ($debug) {
-                echo "<script>console.log('Processing category: " . $category['category'] . "');</script>";
-            }
-            $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
-            $cat_title = htmlentities($category['cat_title'] ?? '');
-            $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
-            $cat_footer = !empty($category['footer']) ? nl2br(htmlentities($category['footer'])) : '';
-            $cat_fallback = !empty($category['fallback']) ? nl2br(htmlentities($category['fallback'])) : '';
-
-            $user_defined_classes_raw = trim($category['custom_classes'] ?? '');
-            $user_defined_classes_sanitized = '';
-            if (!empty($user_defined_classes_raw)) {
-                // Sanitize the class string:
-                // 1. Allow only valid characters for CSS class names and spaces.
-                //    (alphanumeric, hyphens, underscores. Spaces are delimiters).
-                // 2. Normalize multiple spaces to single spaces.
-                $cleaned_classes = preg_replace('/[^a-zA-Z0-9\s_-]/', '', $user_defined_classes_raw);
-                $user_defined_classes_sanitized = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
+                echo "<script>console.log('Processing category: " . ($category['category'] ?? '') . "');</script>";
             }
 
-            // Get announcements for the current category
+            // 1. Get all potential announcements for this category.
             $current_cat_announcements = $announcements_by_category[$category['record_id']] ?? [];
-            $announcement_count = count($current_cat_announcements);
+
+            // 2. Create a temporary array to hold ONLY announcements that pass the named filter check.
+            $displayable_announcements = [];
+
+            // 3. Filter the announcements based on their 'named_filter' (if in a project context).
+            foreach ($current_cat_announcements as $ann) {
+                $filter_name = $ann['named_filter'] ?? null;
+                $pid_list = $ann['pid_list'] ?? null;
+
+                // Initialise match flags
+                $pidMatched = true;
+                $sqlMatched = true;
+
+                // --- Perform PID List Check (only in project context if a list is provided) ---
+                if ($page_context === 'project' && !empty($pid_list)) {
+                    if (!$this->isPidInList($project_id, $pid_list)) {
+                        $pidMatched = false; // The current project is NOT in the list.
+                    }
+                }
+
+                if ($page_context === 'project' && !empty($filter_name)) {
+                    // If not in a project context, or if this announcement has no filter, it's eligible.
+                    $sqlMatched = false;
+
+                    // We ARE in a project context AND a filter is named. Time to check the SQL.
+                    if ($all_named_filters === null) {
+                        $all_named_filters = $this->getSubSettings('defined-named-filters');
+                    }
+
+                    $sql_query = null;
+                    foreach ($all_named_filters as $named_filter) {
+                        if ($named_filter['filter-name'] === $filter_name) {
+                            $sql_query = $named_filter['filter-sql'];
+                            break;
+                        }
+                    }
+
+                    if ($sql_query !== null) {
+                        try {
+                            $check_sql = "SELECT project_id FROM (" . $sql_query . ") AS query_result WHERE project_id = ?";
+                            $q = $this->query($check_sql, [$project_id]);
+
+                            if (db_num_rows($q) > 0) {
+                                $sqlMatched = true;
+                            }
+                        } catch (\Exception $e) {
+                            // The query failed! Don't crash. Log the error for the admin to debug their query.
+                            $this->log(
+                                "A named filter failed to execute.", // This is the main log message.
+                                [ // This is the parameters array for additional details.
+                                    "filter" => $filter_name,
+                                    "message" => "Please check the SQL query for errors and see the documentation.",
+                                    "sql" => $sql_query,
+                                    "target_project" => $project_id,
+                                    "record" => $ann['record_id'],
+                                    "category" => $category['record_id'],
+                                    "context" => $page_context,
+                                    "project_id" => $announcementProject // Log this event in the Announcement project's external module log
+                                ]
+                            );   
+                            $sqlMatched = false;
+                        }
+                    }
+                }
+
+                if ($pidMatched && $sqlMatched) {
+                    // This announcement passed all checks, add it to our display list.
+                    $displayable_announcements[] = $ann;
+                } else if ($debug) {
+                    echo "<script>console.log('Announcement \\'" . ($ann['label'] ?? $ann['record_id']) . "\\' not displayed due to filter query.');</script>";
+                }
+            }
+
+            // 4. NOW, use the count of the FILTERED list for all decisions.
+            $announcement_count = count($displayable_announcements);
+
+            // --- ORIGINAL LOGIC RESUMES, BUT NOW USES THE CORRECT FILTERED COUNT ---
 
             // Condition for displaying the category block, if category has announcements or a fallback configured, and if the context and scope align.
             if ((!empty($category['fallback']) || $announcement_count > 0) &&
@@ -218,45 +313,56 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ($page_context === 'login' && ($category['scope___3'] ?? 0) == '1')) // Non-logged in users on login page
             ) {
                 if ($debug) { 
-                    echo "<script>console.log('Found " . $announcement_count . " announcements for category: " . $category['category'] . "');</script>";
+                    echo "<script>console.log('Displaying category " . ($category['category'] ?? '') . " with " . $announcement_count . " filtered announcements.');</script>";
                 }
-                // Create a slug from category title for more specific CSS targeting if desired
+
+                // Prepare variables (your existing code)
+                $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
+                $cat_title = htmlentities($category['cat_title'] ?? '');
+                $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
+                $cat_footer = !empty($category['footer']) ? nl2br(htmlentities($category['footer'])) : '';
+                $cat_fallback = !empty($category['fallback']) ? nl2br(htmlentities($category['fallback'])) : '';
+                $user_defined_classes_raw = trim($category['custom_classes'] ?? '');
+                $user_defined_classes_sanitized = '';
+                if (!empty($user_defined_classes_raw)) {
+                    $cleaned_classes = preg_replace('/[^a-zA-Z0-9\s_-]/', '', $user_defined_classes_raw);
+                    $user_defined_classes_sanitized = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
+                }
+
+                // Build the HTML (your existing code)
                 $category_slug = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
-                // Build the class list
                 $category_custom_classes = $this->getSystemSetting('category-custom-classes');
                 $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug) . " alert"; // Base classes
                 if (!empty($user_defined_classes_sanitized)) {
-                    $class_list .= " " . htmlspecialchars($user_defined_classes_sanitized); // Add user's classes (htmlspecialchars for attribute safety, though sanitized classes should be safe)
+                    $class_list .= " " . htmlspecialchars($user_defined_classes_sanitized);
                 }
 
                 $html_output .= "<div id=\"" . htmlspecialchars($category_slug) . "\" class=\"" . $class_list . "\">";
 
                 if (!empty($cat_title)) {
-                    // Font awesome icon
                     $category_fa_icon = isset($category['fa']) && !empty($category['fa']) ? "<i class=\"" . htmlspecialchars($category['fa'], ENT_QUOTES) . "\"></i> " : "";
                     $html_output .= "<h4 class=\"alert-title rcannounce-title\">" . $category_fa_icon . $cat_title . "</h4>";
                 }
 
                 if ($announcement_count == 0) {
-                    // No announcements, display fallback (only if fallback message itself is not empty)
-                    if (!empty($cat_fallback)) { // This check is a bit redundant due to the outer IF, but safe.
+                    if (!empty($cat_fallback)) {
                         $cat_fallback = \REDCap::filterHtml($cat_fallback);
                         $html_output .= "<p class=\"rcannounce-fallback\">" . $cat_fallback . "</p>";
                     }
                 } else {
-                    // There are announcements, display them in a list
                     if (!empty($cat_header)) {
                         $cat_header = \REDCap::filterHtml($cat_header);
                         $html_output .= "<p class=\"rcannounce-hdr\">" . $cat_header . "</p>";
                     }
-                    foreach ($current_cat_announcements as $ann) {
-                        // Get the raw description field
+
+                    // 5. Render the list using the FILTERED array.
+                    foreach ($displayable_announcements as $ann) {
+                        // Your existing rendering logic for a single announcement
                         $raw_ann_desc = $ann['desc'] ?? ''; 
                         $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
-
-                        // Output the sanitized HTML. We'll wrap it in a div for consistent structure and styling.
                         $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
                     }
+
                     if (!empty($cat_footer)) {
                         $cat_footer = \REDCap::filterHtml($cat_footer);
                         $html_output .= "<p class=\"rcannounce-ftr\">" . $cat_footer . "</p>";
@@ -265,10 +371,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 $html_output .= "</div>"; // End .rc-announcement-category
             } else {
                 if ($debug) {
-                    echo "<script>console.log('Category " . $category['category'] . " either empty and no fallback message or scope does not align. Skipping.');</script>";
+                    echo "<script>console.log('Category " . ($category['category'] ?? '') . " either has no displayable announcements and no fallback, or scope does not align. Skipping.');</script>";
                 }
             }
-        }
+        } // End main foreach categories loop
 
         // Wrap all category blocks in a main container. Set left-align since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div.
         if (!empty($html_output)) {
@@ -292,7 +398,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             $style_attr = $page_context === 'login' ? ' style="text-align: left;"' : '';
 
             if ($this->getSystemSetting('fix-project-width') && $page_context === 'project') {
-               $style_attr = ' style="max-width: 800px;" ';
+                $style_attr = ' style="max-width: 800px;" ';
             }
 
             // 5. Implode the array into a final, clean class string and build the div
@@ -311,27 +417,27 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             echo "<script type=\"text/javascript\">
                 $(document).ready(function() {
                     var announcementHTML = {$escaped_js_html_output};
-            var \$targetContainer;
+                    var \$targetContainer;
 
-            if ($('#left_col').length) {
-                \$targetContainer = $('#left_col').children('div').first(); // Login page
-            } else if ($('#pagecontent').length) {
-                \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
-            } else if ($('#subheader').length) {
-                \$targetContainer = $('#subheader'); // Project pages
-            } else if (!\$targetContainer.length) {
-                \$targetContainer = $('#pagecontainer');
-            } else {
-                \$targetContainer = $('body'); // Absolute fallback
-            }
+                    if ($('#left_col').length) {
+                        \$targetContainer = $('#left_col').children('div').first(); // Login page
+        } else if ($('#pagecontent').length) {
+            \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
+        } else if ($('#subheader').length) {
+            \$targetContainer = $('#subheader'); // Project pages
+        } else if (!\$targetContainer.length) {
+            \$targetContainer = $('#pagecontainer');
+        } else {
+            \$targetContainer = $('body'); // Absolute fallback
+        }
 
-            // Prepend the announcements to the determined target container
-            if (\$targetContainer && \$targetContainer.length) {
-                \$targetContainer.prepend(announcementHTML);
-            } else {
-                // This case should be rare if 'body' is the ultimate fallback
-                console.error('Announcements Module: Could not find a suitable container to inject announcements.');
-            }
+        // Prepend the announcements to the determined target container
+        if (\$targetContainer && \$targetContainer.length) {
+            \$targetContainer.prepend(announcementHTML);
+        } else {
+            // This case should be rare if 'body' is the ultimate fallback
+            console.error('Announcements Module: Could not find a suitable container to inject announcements.');
+        }
         });
     </script>";
         }
