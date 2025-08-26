@@ -73,20 +73,33 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             return false;
         }
 
+        // Set debug mode
+        $debug = $this->getSystemSetting('debug');
+
         // Remove all whitespace and split the string by commas
         $parts = explode(',', str_replace(' ', '', $pid_list_string));
 
         foreach ($parts as $part) {
-            // Check if the part is a range (e.g., "100-110")
             if (strpos($part, '-') !== false) {
                 list($start, $end) = explode('-', $part);
-                if (is_numeric($start) && is_numeric($end) && $current_pid >= $start && $current_pid <= $end) {
-                    return true; // The PID is within this range
+                if (is_numeric($start) && is_numeric($end) && $start <= $end) {
+                    if ($current_pid >= $start && $current_pid <= $end) {
+                        return true; // The PID is within this range
+                    }
+                } 
+                // ADDED: Debug message for malformed range
+                else if ($debug) {
+                    echo "<script>console.warn('Announcements DEBUG: Malformed range \"".htmlspecialchars($part, ENT_QUOTES)."\" in PID list was ignored.');</script>";
                 }
             }
-            // Check if the part is a single ID
-            elseif (is_numeric($part) && $current_pid == $part) {
-                return true; // The PID is an exact match
+            elseif (is_numeric($part)) {
+                if ($current_pid == $part) {
+                    return true; // The PID is an exact match
+                }
+            }
+            // ADDED: Debug message for non-numeric part
+            else if ($debug && !empty($part)) {
+                echo "<script>console.warn('Announcements DEBUG: Non-numeric value \"".htmlspecialchars($part, ENT_QUOTES)."\" in PID list was ignored.');</script>";
             }
         }
 
@@ -150,7 +163,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         // 3. Final check to exit the module if we are not in a context in which it ought to run
         if (!$run_module_on_this_page) {
             if ($debug) {
-                echo "<script>console.log('Announcements Module: Not in a context in which it should run.');</script>";
+                echo "<script>console.log('Announcements Module DEBUG: Not in an eligible page context.');</script>";
             }
             return;
         }
@@ -159,7 +172,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         $announcementProject = $this->getSystemSetting('announcement-project');
         if (empty($announcementProject)) {
             if ($debug) {
-                echo "<script>console.log('Announcements Module: No announcement project specified.');</script>";
+                echo "<script>console.log('Announcements Module DEBUG: No announcement project specified.');</script>";
             }
             return;
         }
@@ -209,10 +222,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         // If debug mode enabled, report how many categories and how many announcements.
         if ($debug) {
             echo "<script>
-                console.log('Announcements Module Debug');
-                console.log('Context: " . $page_context . "');
-                console.log('Announcement Project: " . $announcementProject . "');
-                console.log('Found " . count($announcements) . " announcements in " . count($categories) . " categories');
+                console.log('Announcements Module DEBUG');
+                console.log('    - Context: " . $page_context . "');
+                console.log('    - Announcement Project: " . $announcementProject . "');
+                console.log('    - Found " . count($announcements) . " announcement" . (count($announcements) === 1 ? '' : 's') . " in " . count($categories) . " categor" . (count($categories) === 1 ? 'y' : 'ies') . "');
                 </script>";
         }
 
@@ -223,7 +236,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         foreach ($categories as $category) {
             if ($debug) {
-                echo "<script>console.log('Processing category: " . ($category['category'] ?? '') . "');</script>";
+                echo "<script>console.log('    - Category \`" . ($category['category'] ?? '') . "\`:');</script>";
             }
 
             // 1. Get all potential announcements for this category.
@@ -245,6 +258,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 if ($page_context === 'project' && !empty($pid_list)) {
                     if (!$this->isPidInList($project_id, $pid_list)) {
                         $pidMatched = false; // The current project is NOT in the list.
+                        if ($debug) {
+                            echo "<script>console.log('        - PID List Check Failed for announcement " . $ann['record_id'] . " (" . $ann['label'] . "):')</script>";
+                            echo "<script>console.log('          PID " . $project_id . " NOT in " . $pid_list . "');</script>";
+                        }
                     }
                 }
 
@@ -272,6 +289,11 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
                             if (db_num_rows($q) > 0) {
                                 $sqlMatched = true;
+                            } else {
+                                if ($debug) {
+                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $ann['record_id'] . " (" . $ann['label'] . "):')</script>";
+                                    echo "<script>console.log('          PID " . $project_id . " NOT returned by \`" . $filter_name . "\` query.');</script>";
+                                }
                             }
                         } catch (\Exception $e) {
                             // The query failed! Don't crash. Log the error for the admin to debug their query.
@@ -289,6 +311,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 ]
                             );   
                             $sqlMatched = false;
+                            if ($debug) {
+                                echo "<script>console.warn('        - Named Filter Check Failed to execute. See EM log in PID " . $announcementProject . " for details.');</script>";
+                            }
                         }
                     }
                 }
@@ -296,9 +321,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 if ($pidMatched && $sqlMatched) {
                     // This announcement passed all checks, add it to our display list.
                     $displayable_announcements[] = $ann;
-                } else if ($debug) {
-                    echo "<script>console.log('Announcement \\'" . ($ann['label'] ?? $ann['record_id']) . "\\' not displayed due to filter query.');</script>";
-                }
+                } 
             }
 
             // 4. NOW, use the count of the FILTERED list for all decisions.
@@ -313,7 +336,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ($page_context === 'login' && ($category['scope___3'] ?? 0) == '1')) // Non-logged in users on login page
             ) {
                 if ($debug) { 
-                    echo "<script>console.log('Displaying category " . ($category['category'] ?? '') . " with " . $announcement_count . " filtered announcements.');</script>";
+                    echo "<script>console.log('        - Found " . $announcement_count . " filtered announcement" . ($announcement_count === 1 ? '' : 's') . "');</script>";
                 }
 
                 // Prepare variables (your existing code)
@@ -348,7 +371,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     if (!empty($cat_fallback)) {
                         $cat_fallback = \REDCap::filterHtml($cat_fallback);
                         $html_output .= "<p class=\"rcannounce-fallback\">" . $cat_fallback . "</p>";
-                    }
+                    } 
                 } else {
                     if (!empty($cat_header)) {
                         $cat_header = \REDCap::filterHtml($cat_header);
@@ -361,6 +384,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                         $raw_ann_desc = $ann['desc'] ?? ''; 
                         $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
                         $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
+                        if ($debug) {
+                            echo "<script>console.log('        - Rendered announcement " . $ann['record_id'] . " (" . $ann['label'] . ")');</script>";
+                        }
                     }
 
                     if (!empty($cat_footer)) {
@@ -371,7 +397,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 $html_output .= "</div>"; // End .rc-announcement-category
             } else {
                 if ($debug) {
-                    echo "<script>console.log('Category " . ($category['category'] ?? '') . " either has no displayable announcements and no fallback, or scope does not align. Skipping.');</script>";
+                    echo "<script>console.log('        - No announcements found and no fallback message or scope does not align.');</script>";
                 }
             }
         } // End main foreach categories loop

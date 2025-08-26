@@ -25,7 +25,7 @@ A link to the Announcements project XML file and instructions for its implementa
 
 The module fetches announcement and category details from records in a designated REDCap project (specified in the module configuration). This project should be built from the Project XML file linked to from the setup page. The project's data dictionary contains two instruments - "Categories" and "Announcements" - and two arms - "Categories" and "Announcements", so the single project can manage both announcements and the categories they fall within.
 
-**Important:** The Announcements project must be built correctly, and in particular, the Dynamic SQL field that is used to populate a drop-down list of categories, must be configured by an administrator, since it cannot be automatically populated from the data dictionary.
+**Important:** The Announcements project must be built correctly, and in particular, the Dynamic SQL fields that are used to populate the drop-down lists of categories and query filters, must be configured by an administrator, since they cannot be automatically populated from the data dictionary.
 
 ### Categories
 
@@ -50,10 +50,12 @@ After creating categories, individual announcements can be created within those 
 
 | Field | Type | Description |
 | --- | --- | --- |
-| Label | Text | **(Not displayed in announcements)** Used as a custom record label for ease of finding the right announcement from the record status dashboard to edit it. |
 | Category | Dropdown | **(Dynamic SQL)** The record from the Categories arm, i.e., the category, to which this announcement relates. |
+| Label | Text | **(Not displayed in announcements)** Used as a custom record label for ease of finding the right announcement from the record status dashboard to edit it. |
 | Active | Yes/No | Used to disable this announcement. |
 | Order | Integer | A lower number indicates a higher display priority. If two announcements have the same order, they are secondarily sorted by Record ID. |
+| Project ID list | Text | A comma-separated list of project IDs or ranges, such as `102, 105, 110-115`, such that if the announcement is to be displayed in a Project context, it will only display if the project ID is in this list. |
+| Query Filter | Dropdown | **(Dynamic SQL)** Select from a list of administrator defined project queries, such that if the announcement is to be displayed in a Project context, it will only display if the project ID is found in the selected query. |
 | Show From | Datetime | Announcement appears on or after this date/time. Leave blank to show immediately (if active). |
 | Show Until | Datetime | Announcement disappears after this date/time. Leave blank to show indefinitely (if active). |
 | Announcement Content | Text | The main content of the announcement. **HTML is allowed.** Use the rich-text editor to format this content (bold, italics, lists, alignment, line breaks, links etc.). |
@@ -69,6 +71,59 @@ Categories of announcements may be configured to be displayed in specific contex
 | Login | The REDCap login page, where announcements are displayed to unauthenticated users. |
 
 Administrators may choose which categories of announcements are relevant to which scopes by checking the appropriate checkbox option for that category in their Announcements project. For example, training opportunities might be relevant for System and Login pages, but would clutter the Project pages too much, whereas outage notifications are probably relevant in all scopes. An announcement about how to get access to REDCap is only relevant for the Login scope (however this is more easily done using the Login text in Control Center).
+
+## Project Filters
+
+Announcements that are in categories that have project scope may be filtered as to which projects they appear on, either by specifying a comma-separated list of project IDs, or by selecting a pre-defined project query filter.
+
+If both a Project ID list and a query filter are specified, then both must match for the announcement to be displayed.
+
+### Project ID list
+
+The Project ID List `[pid_list]` variable in the announcements project can be used to specify a list of project IDs or ranges, such as `102, 105, 110-115`, such that if the announcement is to be displayed in a Project context, it will only display if the project ID is in this list and the category has project scope.
+
+### Query Filters (advanced)
+
+For most robust dynamic filtering, an administrator may define custom project queries (called filters), by preparing a SQL statement that returns (at minimum) a column of project ID values. The announcement will only be displayed if the project ID is returned by the selected query.
+
+The Announcements module will, in a project context, determine if a filter query has been specified for an announcement. If a query has been specified, the pre-defined query is executed as a sub-query, and its project_id column is returned, and the current project's project_id is compared using the Framework's parameterised `query()` method. This maximises safety and protects against possible SQL injection, or accidental execution of a query that could cause deletion or modification of data.
+
+Filter are labelled with a name that is then selected from a dropdown list. The name may be any string, with or without spaces. If two queries have the same name, only the first will be evaluated.
+
+Examples of filter queries include:
+
+All projects with Research purposes and Development status:
+```SQL
+SELECT project_id
+FROM   redcap_projects
+WHERE  status = 0
+AND    purpose = 2
+```
+
+All projects that have a specific module (`my_module`, for illustrative purposes) enabled (note that the `key` field must be escaped by backticks as it is a reserved word in MySQL):
+```SQL
+SELECT project_id
+FROM   redcap_external_module_settings
+WHERE  `key` = 'enabled'
+AND    value = 'true'
+AND    external_module_id = (
+    SELECT external_module_id
+    FROM   redcap_external_modules
+    WHERE  directory_prefix = 'my_module'
+)
+```
+
+All projects with a user whose primary email address is not within the domain 'myinstitute.org' and who has either `design`, `data_access_groups` or `user_rights` - the 'highest-level' - privileges:
+```SQL
+SELECT rur.project_id
+FROM   redcap_user_rights rur
+JOIN   redcap_user_information rui
+ON     rur.username = rui.username
+WHERE  1 IN (rur.design, rur.data_access_groups, rur.user_rights)
+AND    rui.user_email NOT LIKE '%myinstitute.org'
+```
+
+It is crucial that you use the Database Query Tool to test that your queries return the correct results, before using the for announcements. If a query fails to execute or does not return a project_id column, a message will be logged to the Announcement project's External Modules log.
 
 ## Styling
 
@@ -144,9 +199,29 @@ This is particularly useful to adjust the width carefully to fit the page. The p
 
 For ease, there is a configuration option to automatically add this styling to the parent div on project pages.
 
+The announcements in the above screenshot also have custom classes on the wrapper (`m-3 p-3` for a basic margin and padding) and the category (`shadow text-center` to add a shadow and center-align the title text). Using `text-center` will center everything inside the category div, including the text of the announcement. Use the rich text editor when creating announcements if you need the body of the announcements to have left-aligned text.
+
+## Debug logging
+
+This module provides a debug log that can be enabled in the control center. When enabled, messages pertaining to the module's logic will be displayed in the JavaScript console. This can help diagnose unexpected behavior or issues with the module, such as the module not working in the correct contexts, or announcements displaying in the wrong contexts or projects, or not displaying in the correct contexts or projects.
+
+The number of messages output to the JavaScript log can be high, depending on the number of categories, announcements, and named filters. As such the debug option should only be enabled for troubleshooting purposes but disabled at other times.
+
+If a named query fails to execute, such as if it is a malformed query or does not return a project_id column, then an error message with the problematic query and details about the announcement and the project that attempted to display it will be output to the Announcement project's External Module log. This happens regardless of the Debug setting.
+
 ## Todo
 
 - Add support for projects to display their own internal announcements to their users
+
+## Changelog
+
+| Version | Description |
+| --- | --- |
+| v1.0.0 | Initial Release |
+| v1.1.0 | Adds a custom class to the `rcaccounce-wrapper` div to allow admins to target specific scopes for CSS injection.<br/>Improves instructions in the README and setup.php page. |
+| v1.1.1 | Bugfix: In some cases when a user logs out of REDCap, announcements were incorrectly displayed to them as if they were logged in.<br/>Bugfix: Minor typo in announcement project template XML. |
+| v1.1.2 | Adds a Debug mode, some minor enhancements. |
+| v1.2.0 | Adds query filters and PID list support to control the projects that announcements with project-scope appear on. |
 
 ## AI Involvement Declaration
 
