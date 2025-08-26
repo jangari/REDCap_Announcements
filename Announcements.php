@@ -296,10 +296,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 }
                             }
                         } catch (\Exception $e) {
-                            // The query failed! Don't crash. Log the error for the admin to debug their query.
-                            $this->log(
-                                "A named filter failed to execute.", // This is the main log message.
-                                [ // This is the parameters array for additional details.
+                            $this->log( // Log the failed query in the module log in the announcement project
+                                "A named filter failed to execute.",
+                                [
                                     "filter" => $filter_name,
                                     "message" => "Please check the SQL query for errors and see the documentation.",
                                     "sql" => $sql_query,
@@ -307,7 +306,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                     "record" => $ann['record_id'],
                                     "category" => $category['record_id'],
                                     "context" => $page_context,
-                                    "project_id" => $announcementProject // Log this event in the Announcement project's external module log
+                                    "project_id" => $announcementProject
                                 ]
                             );   
                             $sqlMatched = false;
@@ -327,8 +326,6 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             // 4. NOW, use the count of the FILTERED list for all decisions.
             $announcement_count = count($displayable_announcements);
 
-            // --- ORIGINAL LOGIC RESUMES, BUT NOW USES THE CORRECT FILTERED COUNT ---
-
             // Condition for displaying the category block, if category has announcements or a fallback configured, and if the context and scope align.
             if ((!empty($category['fallback']) || $announcement_count > 0) &&
                 (($page_context === 'system' && ($category['scope___1'] ?? 0) == '1') || // Logged in users on system pages
@@ -339,7 +336,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     echo "<script>console.log('        - Found " . $announcement_count . " filtered announcement" . ($announcement_count === 1 ? '' : 's') . "');</script>";
                 }
 
-                // Prepare variables (your existing code)
+                // Prepare variables
                 $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
                 $cat_title = htmlentities($category['cat_title'] ?? '');
                 $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
@@ -352,7 +349,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     $user_defined_classes_sanitized = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
                 }
 
-                // Build the HTML (your existing code)
+                // Build the HTML
                 $category_slug = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
                 $category_custom_classes = $this->getSystemSetting('category-custom-classes');
                 $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug) . " alert"; // Base classes
@@ -380,7 +377,6 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
                     // 5. Render the list using the FILTERED array.
                     foreach ($displayable_announcements as $ann) {
-                        // Your existing rendering logic for a single announcement
                         $raw_ann_desc = $ann['desc'] ?? ''; 
                         $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
                         $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
@@ -402,7 +398,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             }
         } // End main foreach categories loop
 
-        // Wrap all category blocks in a main container. Set left-align since the login page left_col div sets centre alignment which then breaks any classes set by the module. Should only ever affect this module's div.
+        // Wrap all category blocks in a main container.
         if (!empty($html_output)) {
             // 1. Get user-defined classes from module settings
             $wrapper_custom_classes = trim($this->getSystemSetting('wrapper-custom-classes') ?? '');
