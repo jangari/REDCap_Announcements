@@ -259,10 +259,8 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     if (!$this->isPidInList($project_id, $pid_list)) {
                         $pidMatched = false; // The current project is NOT in the list.
                         if ($debug) {
-                            $logMessage = "        - PID List Check Failed for announcement " . ($announcement['record_id'] ?? '') . " (" . ($announcement['label'] ?? '') . "):";
-                            $logDetails = "          PID " . ($project_id ?? '') . " NOT in " . ($pid_list ?? '');
-                            echo "<script>console.log(" . json_encode($logMessage) . ");</script>";
-                            echo "<script>console.log(" . json_encode($logDetails) . ");</script>";
+                            echo "<script>console.log('        - PID List Check Failed for announcement " . $this->escape($announcement['record_id']) . " (" . $this->escape($announcement['label']) . "):')</script>";
+                            echo "<script>console.log('          PID " . $this->escape($project_id) . " NOT in " . $this->escape($pid_list) . "');</script>";
                         }
                     }
                 }
@@ -293,10 +291,8 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 $sqlMatched = true;
                             } else {
                                 if ($debug) {
-                                    $logMessage = "        - Named Filter Check Failed for announcement " . ($announcement['record_id'] ?? '') . " (" . ($announcement['label'] ?? '') . "):";
-                                    $logDetails = "          PID " . ($project_id ?? '') . " NOT returned by `" . ($filter_name ?? '') . "` query.";
-                                    echo "<script>console.log(" . json_encode($logMessage) . ");</script>";
-                                    echo "<script>console.log(" . json_encode($logDetails) . ");</script>";
+                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $this->escape($announcement['record_id']) . " (" . $this->escape($announcement['label']) . "):')</script>";
+                                    echo "<script>console.log('          PID " . $this->escape($project_id) . " NOT returned by \`" . $this->escape($filter_name) . "\` query.');</script>";
                                 }
                             }
                         } catch (\Exception $e) {
