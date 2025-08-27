@@ -259,8 +259,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     if (!$this->isPidInList($project_id, $pid_list)) {
                         $pidMatched = false; // The current project is NOT in the list.
                         if ($debug) {
-                            echo "<script>console.log('        - PID List Check Failed for announcement " . $announcement['record_id'] . " (" . $this->escape($announcement['label']) . "):')</script>";
-                            echo "<script>console.log('          PID " . $project_id . " NOT in " . $this->escape($pid_list) . "');</script>";
+                            $logMessage = "        - PID List Check Failed for announcement " . ($announcement['record_id'] ?? '') . " (" . ($announcement['label'] ?? '') . "):";
+                            $logDetails = "          PID " . ($project_id ?? '') . " NOT in " . ($pid_list ?? '');
+                            echo "<script>console.log(" . json_encode($logMessage) . ");</script>";
+                            echo "<script>console.log(" . json_encode($logDetails) . ");</script>";
                         }
                     }
                 }
@@ -291,8 +293,10 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 $sqlMatched = true;
                             } else {
                                 if ($debug) {
-                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $announcement['record_id'] . " (" . $this->escape($announcement['label']) . "):')</script>";
-                                    echo "<script>console.log('          PID " . $project_id . " NOT returned by \`" . $this->escape($filter_name) . "\` query.');</script>";
+                                    $logMessage = "        - Named Filter Check Failed for announcement " . ($announcement['record_id'] ?? '') . " (" . ($announcement['label'] ?? '') . "):";
+                                    $logDetails = "          PID " . ($project_id ?? '') . " NOT returned by `" . ($filter_name ?? '') . "` query.";
+                                    echo "<script>console.log(" . json_encode($logMessage) . ");</script>";
+                                    echo "<script>console.log(" . json_encode($logDetails) . ");</script>";
                                 }
                             }
                         } catch (\Exception $e) {
