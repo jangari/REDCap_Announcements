@@ -89,7 +89,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 } 
                 // ADDED: Debug message for malformed range
                 else if ($debug) {
-                    echo "<script>console.warn('Announcements DEBUG: Malformed range \"".htmlspecialchars($part, ENT_QUOTES)."\" in PID list was ignored.');</script>";
+                    echo "<script>console.warn('Announcements DEBUG: Malformed range \"" . $this->escape($part) . "\" in PID list was ignored.');</script>";
                 }
             }
             elseif (is_numeric($part)) {
@@ -99,7 +99,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             }
             // ADDED: Debug message for non-numeric part
             else if ($debug && !empty($part)) {
-                echo "<script>console.warn('Announcements DEBUG: Non-numeric value \"".htmlspecialchars($part, ENT_QUOTES)."\" in PID list was ignored.');</script>";
+                echo "<script>console.warn('Announcements DEBUG: Non-numeric value \"" . $this->escape($part) . "\" in PID list was ignored.');</script>";
             }
         }
 
@@ -223,7 +223,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
         if ($debug) {
             echo "<script>
                 console.log('Announcements Module DEBUG');
-                console.log('    - Context: " . $page_context . "');
+                console.log('    - Context: " . $this->escape($page_context) . "');
                 console.log('    - Announcement Project: " . $announcementProject . "');
                 console.log('    - Found " . count($announcements) . " announcement" . (count($announcements) === 1 ? '' : 's') . " in " . count($categories) . " categor" . (count($categories) === 1 ? 'y' : 'ies') . "');
                 </script>";
@@ -236,7 +236,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         foreach ($categories as $category) {
             if ($debug) {
-                echo "<script>console.log('    - Category \`" . ($category['category'] ?? '') . "\`:');</script>";
+                echo "<script>console.log('    - Category \`" . ($this->escape($category['category']) ?? '') . "\`:');</script>";
             }
 
             // 1. Get all potential announcements for this category.
@@ -259,8 +259,8 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     if (!$this->isPidInList($project_id, $pid_list)) {
                         $pidMatched = false; // The current project is NOT in the list.
                         if ($debug) {
-                            echo "<script>console.log('        - PID List Check Failed for announcement " . $announcement['record_id'] . " (" . $announcement['label'] . "):')</script>";
-                            echo "<script>console.log('          PID " . $project_id . " NOT in " . $pid_list . "');</script>";
+                            echo "<script>console.log('        - PID List Check Failed for announcement " . $announcement['record_id'] . " (" . $this->escape($announcement['label']) . "):')</script>";
+                            echo "<script>console.log('          PID " . $project_id . " NOT in " . $this->escape($pid_list) . "');</script>";
                         }
                     }
                 }
@@ -291,21 +291,21 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 $sqlMatched = true;
                             } else {
                                 if ($debug) {
-                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $announcement['record_id'] . " (" . $announcement['label'] . "):')</script>";
-                                    echo "<script>console.log('          PID " . $project_id . " NOT returned by \`" . $filter_name . "\` query.');</script>";
+                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $announcement['record_id'] . " (" . $this->escape($announcement['label']) . "):')</script>";
+                                    echo "<script>console.log('          PID " . $project_id . " NOT returned by \`" . $this->escape($filter_name) . "\` query.');</script>";
                                 }
                             }
                         } catch (\Exception $e) {
                             $this->log( // Log the failed query in the module log in the announcement project
                                 "A named filter failed to execute.",
                                 [
-                                    "filter" => $filter_name,
+                                    "filter" => $this->escape($filter_name),
                                     "message" => "Please check the SQL query for errors and see the documentation.",
-                                    "sql" => $sql_query,
+                                    "sql" => $this->escape($sql_query),
                                     "target_project" => $project_id,
                                     "record" => $announcement['record_id'],
                                     "category" => $category['record_id'],
-                                    "context" => $page_context,
+                                    "context" => $this->escape($page_context),
                                     "project_id" => $announcementProject
                                 ]
                             );   
@@ -333,15 +333,18 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                 ($page_context === 'login' && ($category['scope___3'] ?? 0) == '1')) // Non-logged in users on login page
             ) {
                 if ($debug) { 
-                    echo "<script>console.log('        - Found " . $announcement_count . " filtered announcement" . ($announcement_count === 1 ? '' : 's') . "');</script>";
+                    echo "<script>console.log('      - Found " . $announcement_count . " filtered announcement" . ($announcement_count === 1 ? '' : 's') . ".');</script>";
                 }
 
-                // Prepare variables
-                $cat_record_id = htmlspecialchars($category['record_id'] ?? '');
-                $cat_title = htmlentities($category['cat_title'] ?? '');
-                $cat_header = !empty($category['header']) ? nl2br(htmlentities($category['header'])) : '';
-                $cat_footer = !empty($category['footer']) ? nl2br(htmlentities($category['footer'])) : '';
-                $cat_fallback = !empty($category['fallback']) ? nl2br(htmlentities($category['fallback'])) : '';
+                // Prepare variables with RAW data
+                $cat_record_id = $category['record_id'] ?? '';
+                $cat_title = $category['cat_title'] ?? '';
+                $cat_header = $category['header'] ?? '';
+                $cat_footer = $category['footer'] ?? '';
+                $cat_fallback = $category['fallback'] ?? '';
+                $fa_class = $category['fa'] ?? null;
+
+                // Sanitization for CSS classes
                 $user_defined_classes_raw = trim($category['custom_classes'] ?? '');
                 $user_defined_classes_sanitized = '';
                 if (!empty($user_defined_classes_raw)) {
@@ -349,45 +352,52 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     $user_defined_classes_sanitized = trim(preg_replace('/\s+/', ' ', $cleaned_classes));
                 }
 
-                // Build the HTML
+                // Build the category slug (raw)
                 $category_slug = 'rcannounce-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($category['category'] ?: $cat_record_id));
+
+                // Build the class list (raw)
                 $category_custom_classes = $this->getSystemSetting('category-custom-classes');
-                $class_list = "rcannounce-category " . htmlspecialchars($category_custom_classes) . " " . htmlspecialchars($category_slug) . " alert"; // Base classes
+                $class_list = "rcannounce-category " . $category_custom_classes . " " . $category_slug . " alert";
                 if (!empty($user_defined_classes_sanitized)) {
-                    $class_list .= " " . htmlspecialchars($user_defined_classes_sanitized);
+                    $class_list .= " " . $user_defined_classes_sanitized;
                 }
 
-                $html_output .= "<div id=\"" . htmlspecialchars($category_slug) . "\" class=\"" . $class_list . "\">";
+                // Apply escaping for attributes right at the moment of output
+                $html_output .= "<div id=\"" . $this->escape($category_slug) . "\" class=\"" . $this->escape($class_list) . "\">";
 
                 if (!empty($cat_title)) {
-                    $category_fa_icon = isset($category['fa']) && !empty($category['fa']) ? "<i class=\"" . htmlspecialchars($category['fa'], ENT_QUOTES) . "\"></i> " : "";
-                    $html_output .= "<h4 class=\"alert-title rcannounce-title\">" . $category_fa_icon . $cat_title . "</h4>";
+                    $category_fa_icon = !empty($fa_class) ? "<i class=\"" . $this->escape($fa_class) . "\"></i> " : "";
+                    $html_output .= "<h4 class=\"alert-title rcannounce-title\">" . $category_fa_icon . $this->escape($cat_title) . "</h4>";
                 }
 
                 if ($announcement_count == 0) {
                     if (!empty($cat_fallback)) {
-                        $cat_fallback = \REDCap::filterHtml($cat_fallback);
-                        $html_output .= "<p class=\"rcannounce-fallback\">" . $cat_fallback . "</p>";
+                        // Sanitize fallback text for HTML and convert newlines
+                        $html_output .= "<p class=\"rcannounce-fallback\">" . nl2br(\REDCap::filterHtml($cat_fallback)) . "</p>";
                     } 
                 } else {
                     if (!empty($cat_header)) {
-                        $cat_header = \REDCap::filterHtml($cat_header);
-                        $html_output .= "<p class=\"rcannounce-hdr\">" . $cat_header . "</p>";
+                        // Sanitize header text for HTML and convert newlines
+                        $html_output .= "<p class=\"rcannounce-hdr\">" . nl2br(\REDCap::filterHtml($cat_header)) . "</p>";
                     }
 
-                    // 5. Render the list using the FILTERED array.
+                    // Render the list using the FILTERED array
                     foreach ($displayable_announcements as $announcement) {
                         $raw_ann_desc = $announcement['desc'] ?? ''; 
+                        // Sanitize the main announcement content, which is expected to be HTML
                         $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
+
                         $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
+
                         if ($debug) {
-                            echo "<script>console.log('        - Rendered announcement " . $announcement['record_id'] . " (" . $announcement['label'] . ")');</script>";
+                            $log_label = $this->escape($announcement['label'] ?? '');
+                            echo "<script>console.log('      - Rendered announcement " . $this->escape($announcement['record_id']) . " (" . $log_label . ")');</script>";
                         }
                     }
 
                     if (!empty($cat_footer)) {
-                        $cat_footer = \REDCap::filterHtml($cat_footer);
-                        $html_output .= "<p class=\"rcannounce-ftr\">" . $cat_footer . "</p>";
+                        // Sanitize footer text for HTML and convert newlines
+                        $html_output .= "<p class=\"rcannounce-ftr\">" . nl2br(\REDCap::filterHtml($cat_footer)) . "</p>";
                     }
                 }
                 $html_output .= "</div>"; // End .rc-announcement-category
@@ -432,7 +442,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             // Insert style now
             $custom_css = $this->getSystemSetting('custom-css');
             if (!empty($custom_css)) {
-                echo "<style type=\"text/css\">" . $custom_css . "</style>";
+                echo "<style type=\"text/css\">" . strip_tags($custom_css) . "</style>";
             }
             $escaped_js_html_output = json_encode($final_html_output);
 
@@ -441,27 +451,29 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     var announcementHTML = {$escaped_js_html_output};
                     var \$targetContainer;
 
+                    // --- CORRECTED TARGETING LOGIC ---
                     if ($('#left_col').length) {
                         \$targetContainer = $('#left_col').children('div').first(); // Login page
-        } else if ($('#pagecontent').length) {
-            \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
-        } else if ($('#subheader').length) {
-            \$targetContainer = $('#subheader'); // Project pages
-        } else if (!\$targetContainer.length) {
-            \$targetContainer = $('#pagecontainer');
-        } else {
-            \$targetContainer = $('body'); // Absolute fallback
-        }
+                    } else if ($('#pagecontent').length) {
+                        \$targetContainer = $('#pagecontent'); // System pages (my projects, etc)
+                    } else if ($('#subheader').length) {
+                        \$targetContainer = $('#subheader'); // Project pages
+                    } else if ($('#pagecontainer').length) {
+                        \$targetContainer = $('#pagecontainer'); // Primary fallback
+                    } else {
+                        \$targetContainer = $('body'); // Absolute fallback
+                    }
+                    // --- END CORRECTION ---
 
-        // Prepend the announcements to the determined target container
-        if (\$targetContainer && \$targetContainer.length) {
-            \$targetContainer.prepend(announcementHTML);
-        } else {
-            // This case should be rare if 'body' is the ultimate fallback
-            console.error('Announcements Module: Could not find a suitable container to inject announcements.');
-        }
-        });
-    </script>";
+                    // Prepend the announcements to the determined target container
+                    if (\$targetContainer && \$targetContainer.length) {
+                        \$targetContainer.prepend(announcementHTML);
+                    } else {
+                        // This case should now be impossible since $('body') is the ultimate fallback
+                        console.error('Announcements Module: Could not find a suitable container to inject announcements.');
+                    }
+                    });
+            </script>";
         }
     }
 }
