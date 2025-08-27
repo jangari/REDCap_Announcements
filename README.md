@@ -221,7 +221,7 @@ If a named query fails to execute, such as if it is a malformed query or does no
 | v1.1.0 | Adds a custom class to the `rcaccounce-wrapper` div to allow admins to target specific scopes for CSS injection.<br/>Improves instructions in the README and setup.php page. |
 | v1.1.1 | Bugfix: In some cases when a user logs out of REDCap, announcements were incorrectly displayed to them as if they were logged in.<br/>Bugfix: Minor typo in announcement project template XML. |
 | v1.1.2 | Adds a Debug mode, some minor enhancements. |
-| v1.2.0 | Adds query filters and PID list support to control the projects that announcements with project-scope appear on. |
+| v2.0.0 | Adds query filters and PID list support to control the projects that announcements with project-scope appear on.<br/>Security review for text sanitisation. |
 
 ## AI Involvement Declaration
 
