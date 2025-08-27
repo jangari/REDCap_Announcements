@@ -209,13 +209,13 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
         // Group announcements by category ID for efficiency
         $announcements_by_category = [];
-        foreach ($announcements as $ann) {
-            $category_id_for_ann = $ann['cat'] ?? null; // 'cat' field links to category record_id
+        foreach ($announcements as $announcement) {
+            $category_id_for_ann = $announcement['cat'] ?? null; // 'cat' field links to category record_id
             if ($category_id_for_ann !== null) {
                 if (!isset($announcements_by_category[$category_id_for_ann])) {
                     $announcements_by_category[$category_id_for_ann] = [];
                 }
-                $announcements_by_category[$category_id_for_ann][] = $ann;
+                $announcements_by_category[$category_id_for_ann][] = $announcement;
             }
         }
 
@@ -246,9 +246,9 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
             $displayable_announcements = [];
 
             // 3. Filter the announcements based on their 'named_filter' (if in a project context).
-            foreach ($current_cat_announcements as $ann) {
-                $filter_name = $ann['named_filter'] ?? null;
-                $pid_list = $ann['pid_list'] ?? null;
+            foreach ($current_cat_announcements as $announcement) {
+                $filter_name = $announcement['named_filter'] ?? null;
+                $pid_list = $announcement['pid_list'] ?? null;
 
                 // Initialise match flags
                 $pidMatched = true;
@@ -259,7 +259,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     if (!$this->isPidInList($project_id, $pid_list)) {
                         $pidMatched = false; // The current project is NOT in the list.
                         if ($debug) {
-                            echo "<script>console.log('        - PID List Check Failed for announcement " . $ann['record_id'] . " (" . $ann['label'] . "):')</script>";
+                            echo "<script>console.log('        - PID List Check Failed for announcement " . $announcement['record_id'] . " (" . $announcement['label'] . "):')</script>";
                             echo "<script>console.log('          PID " . $project_id . " NOT in " . $pid_list . "');</script>";
                         }
                     }
@@ -291,7 +291,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                 $sqlMatched = true;
                             } else {
                                 if ($debug) {
-                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $ann['record_id'] . " (" . $ann['label'] . "):')</script>";
+                                    echo "<script>console.log('        - Named Filter Check Failed for announcement " . $announcement['record_id'] . " (" . $announcement['label'] . "):')</script>";
                                     echo "<script>console.log('          PID " . $project_id . " NOT returned by \`" . $filter_name . "\` query.');</script>";
                                 }
                             }
@@ -303,7 +303,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                                     "message" => "Please check the SQL query for errors and see the documentation.",
                                     "sql" => $sql_query,
                                     "target_project" => $project_id,
-                                    "record" => $ann['record_id'],
+                                    "record" => $announcement['record_id'],
                                     "category" => $category['record_id'],
                                     "context" => $page_context,
                                     "project_id" => $announcementProject
@@ -319,7 +319,7 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
 
                 if ($pidMatched && $sqlMatched) {
                     // This announcement passed all checks, add it to our display list.
-                    $displayable_announcements[] = $ann;
+                    $displayable_announcements[] = $announcement;
                 } 
             }
 
@@ -376,12 +376,12 @@ class Announcements extends \ExternalModules\AbstractExternalModule {
                     }
 
                     // 5. Render the list using the FILTERED array.
-                    foreach ($displayable_announcements as $ann) {
-                        $raw_ann_desc = $ann['desc'] ?? ''; 
+                    foreach ($displayable_announcements as $announcement) {
+                        $raw_ann_desc = $announcement['desc'] ?? ''; 
                         $safe_desc_html = \REDCap::filterHtml($raw_ann_desc);
                         $html_output .= "<p class=\"rcannounce-desc\">" . $safe_desc_html . "</p>";
                         if ($debug) {
-                            echo "<script>console.log('        - Rendered announcement " . $ann['record_id'] . " (" . $ann['label'] . ")');</script>";
+                            echo "<script>console.log('        - Rendered announcement " . $announcement['record_id'] . " (" . $announcement['label'] . ")');</script>";
                         }
                     }
 
